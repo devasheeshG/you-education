@@ -1,0 +1,20 @@
+services:
+  you-education-backend:
+    image: you-education-backend:latest
+    build:
+      context: backend
+      dockerfile: backend/Dockerfile
+    container_name: you-education-backend
+    command: uvicorn app.main:app --log-level debug --host 0.0.0.0 --port 80
+    volumes:
+      - backend:/app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.you-education-backend.rule=Host(`you-education.devasheeshmishra.com`) && PathPrefix(`/api`)
+      - traefik.http.routers.you-education-backend.entrypoints=personal
+      - traefik.http.services.you-education-backend.loadbalancer.server.port=80
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
