@@ -1,5 +1,5 @@
 # Path: app/routers/exams.py
-# Description: This file contains the routers for the exams API.
+# Description: This file contains the routers for the Exams API.
 
 import uuid
 from datetime import datetime, timezone

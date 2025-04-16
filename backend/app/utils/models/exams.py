@@ -64,10 +64,3 @@ class UpdateExamResponse(BaseModel):
 
 # class DeleteExamResponse(BaseModel):
 #     pass  # Empty as the response is 204 No Content
-
-# Configure Pydantic models to handle datetime with timezone
-class Config:
-    json_encoders = {
-        datetime: lambda v: v.isoformat(),
-    }
-    populate_by_name = True

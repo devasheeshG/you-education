@@ -9,11 +9,13 @@ from sqlalchemy import (
     VARCHAR, 
     UUID, 
     DateTime, 
-    Float, 
+    Integer,
+    Enum as SQLEnum,
     ForeignKeyConstraint,
     UniqueConstraint
 )
 from sqlalchemy.orm import relationship
+from app.utils.models import ReferenceTypeEnum
 
 class Subject(DatabaseBase):
     __tablename__ = "subjects"
@@ -34,7 +36,7 @@ class Exam(DatabaseBase):
     subject_id = Column(UUID(as_uuid=True), nullable=False)
     description = Column(String, nullable=True)
     exam_datetime = Column(DateTime(timezone=True), nullable=False)
-    total_hours_to_dedicate = Column(Float, nullable=False)
+    total_hours_to_dedicate = Column(Integer, nullable=False)
     
     # Define relationship to Subject
     subject = relationship("Subject", backref="exams")
@@ -44,6 +46,26 @@ class Exam(DatabaseBase):
         ForeignKeyConstraint(
             ["subject_id"],
             ["subjects.id"],
+            ondelete="CASCADE",
+        ),
+    )
+
+class Reference(DatabaseBase):
+    __tablename__ = "references"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    exam_id = Column(UUID(as_uuid=True), nullable=False)
+    file_type = Column(SQLEnum(ReferenceTypeEnum), nullable=False)
+    file_name = Column(String, nullable=False)
+
+    # Define relationship to Exam
+    exam = relationship("Exam", backref="references")
+
+    __table_args__ = (
+        UniqueConstraint("file_type", "file_name", "exam_id", name="unique_reference_file_per_exam"),
+        ForeignKeyConstraint(
+            ["exam_id"],
+            ["exams.id"],
             ondelete="CASCADE",
         ),
     )

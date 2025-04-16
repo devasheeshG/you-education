@@ -1,5 +1,5 @@
 # Path: app/routers/subjects.py
-# Description: This file contains the routers for the subjects API.
+# Description: This file contains the routers for the Subjects API.
 
 import uuid
 from fastapi import APIRouter, Depends, HTTPException

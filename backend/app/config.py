@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     def get_postgres_uri(self) -> str:
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
+    # MinIO Configuration
+    MINIO_ENDPOINT: str
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    MINIO_BUCKET_NAME: str
+    MINIO_SECURE: bool
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
