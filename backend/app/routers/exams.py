@@ -31,7 +31,6 @@ router = APIRouter(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="Create a new exam",
-    description="Creates a new exam for a specific subject with details including name, date/time, and study hours required."
 )
 def create_exam(
     request: ExamCreateRequest,
@@ -118,7 +117,6 @@ def create_exam(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="List all exams",
-    description="Retrieves all exams categorized into upcoming and previous based on the current date and time."
 )
 def list_exams(
     db: Session = Depends(get_db)
@@ -184,7 +182,6 @@ def list_exams(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="Update an existing exam",
-    description="Updates the details of an existing exam. Only the fields that are provided will be updated."
 )
 def update_exam(
     exam_id: uuid.UUID,
@@ -282,7 +279,6 @@ def update_exam(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="Delete an exam",
-    description="Deletes an exam by its ID."
 )
 def delete_exam(
     exam_id: uuid.UUID,

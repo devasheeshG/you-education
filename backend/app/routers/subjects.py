@@ -29,7 +29,6 @@ router = APIRouter(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="Create a new subject",
-    description="Creates a new subject with the given name and color. The color must be a valid hex color code without the # symbol."
 )
 def create_subject(
     request: SubjectCreateRequest,
@@ -89,7 +88,6 @@ def create_subject(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="List all subjects",
-    description="Retrieves a list of all subjects in the system."
 )
 def list_subjects(
     db: Session = Depends(get_db)
@@ -127,7 +125,6 @@ def list_subjects(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="Update an existing subject",
-    description="Updates the name and/or color of an existing subject. Only the fields that are provided will be updated."
 )
 def update_subject(
     subject_id: uuid.UUID,
@@ -201,7 +198,6 @@ def update_subject(
         500: {"description": "Internal server error - Unexpected error occurred"}
     },
     summary="Delete a subject",
-    description="Deletes a subject by its ID. All related data will also be deleted."
 )
 def delete_subject(
     subject_id: uuid.UUID,
