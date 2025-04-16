@@ -7,7 +7,7 @@ services:
     container_name: you-education-backend
     command: uvicorn app.main:app --log-level debug --host 0.0.0.0 --port 80
     volumes:
-      - backend:/app
+      - ./backend:/app
     labels:
       - traefik.enable=true
       - traefik.http.routers.you-education-backend.rule=Host(`you-education.devasheeshmishra.com`) && PathPrefix(`/api`)
