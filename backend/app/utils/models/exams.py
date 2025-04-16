@@ -24,8 +24,8 @@ class ExamCreateResponse(BaseModel):
     subject: SubjectItem
 
 # List Exam
-class ListExamRequest(BaseModel):
-    pass
+# class ListExamRequest(BaseModel):
+#     pass
 
 class ExamItem(BaseModel):
     id: uuid.UUID

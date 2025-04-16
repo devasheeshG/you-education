@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     UniqueConstraint
 )
+from sqlalchemy.orm import relationship
 
 class Subject(DatabaseBase):
     __tablename__ = "subjects"
@@ -34,6 +35,9 @@ class Exam(DatabaseBase):
     description = Column(String, nullable=True)
     exam_datetime = Column(DateTime(timezone=True), nullable=False)
     total_hours_to_dedicate = Column(Float, nullable=False)
+    
+    # Define relationship to Subject
+    subject = relationship("Subject", backref="exams")
 
     __table_args__ = (
         UniqueConstraint("name", "subject_id", name="unique_exam_name_per_subject"),

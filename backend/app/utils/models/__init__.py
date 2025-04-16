@@ -11,7 +11,6 @@ from .subjects import (
 from .exams import (
     ExamCreateRequest,
     ExamCreateResponse,
-    ListExamRequest,
     ListExamResponse,
     UpdateExamRequest,
     UpdateExamResponse,
@@ -28,7 +27,6 @@ __all__ = [
     # Exams
     "ExamCreateRequest",
     "ExamCreateResponse",
-    "ListExamRequest",
     "ListExamResponse",
     "UpdateExamRequest",
     "UpdateExamResponse",
