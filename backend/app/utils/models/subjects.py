@@ -8,10 +8,7 @@ from typing import Optional, List
 # Helper for color validation
 def validate_hex_color(color: str) -> str:
     """Validate and format hex color code."""
-    if not color.startswith('#'):
-        color = f'#{color}'
-    
-    pattern = r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+    pattern = r'^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
     if not re.match(pattern, color):
         raise ValueError('Invalid hex color code')
     
@@ -20,7 +17,7 @@ def validate_hex_color(color: str) -> str:
 # Create Subject
 class SubjectCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Name of the subject")
-    color: str = Field(..., description="Hex color code (e.g., #FF5733)")
+    color: str = Field(..., description="Hex color code (e.g., FF5733) without #")
     
     @field_validator('color')
     def validate_color(cls, value):
@@ -35,8 +32,8 @@ class SubjectCreateResponse(BaseModel):
 # We'll never need to get a single subject by ID.
 
 # List Subject
-class ListSubjectRequest(BaseModel):
-    pass  # Empty as there are no specific parameters
+# class ListSubjectRequest(BaseModel):
+#     pass  # Empty as there are no specific parameters
 
 class SubjectItem(BaseModel):
     id: uuid.UUID
@@ -49,7 +46,7 @@ class ListSubjectResponse(BaseModel):
 # Update Subject
 class UpdateSubjectRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Name of the subject")
-    color: Optional[str] = Field(None, description="Hex color code (e.g., #FF5733)")
+    color: Optional[str] = Field(None, description="Hex color code (e.g., FF5733) without #")
     
     @field_validator('color')
     def validate_color(cls, value):
@@ -64,8 +61,8 @@ class UpdateSubjectResponse(BaseModel):
     color: str
 
 # Delete Subject
-class DeleteSubjectRequest(BaseModel):
-    pass  # Empty as the ID is in the URL
+# class DeleteSubjectRequest(BaseModel):
+#     pass  # Empty as the ID is in the URL
 
-class DeleteSubjectResponse(BaseModel):
-    pass  # Empty as the response is 204 No Content
+# class DeleteSubjectResponse(BaseModel):
+#     pass  # Empty as the response is 204 No Content

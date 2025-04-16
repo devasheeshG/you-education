@@ -4,7 +4,6 @@
 from .subjects import (
     SubjectCreateRequest,
     SubjectCreateResponse,
-    ListSubjectRequest,
     ListSubjectResponse,
     UpdateSubjectRequest,
     UpdateSubjectResponse,
@@ -22,7 +21,6 @@ __all__ = [
     # Subjects
     "SubjectCreateRequest",
     "SubjectCreateResponse",
-    "ListSubjectRequest",
     "ListSubjectResponse",
     "UpdateSubjectRequest",
     "UpdateSubjectResponse",

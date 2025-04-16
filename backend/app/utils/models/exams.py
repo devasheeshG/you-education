@@ -59,8 +59,8 @@ class UpdateExamResponse(BaseModel):
     subject: SubjectItem
 
 # Delete Exam
-class DeleteExamRequest(BaseModel):
-    pass  # Empty as the ID is in the URL
+# class DeleteExamRequest(BaseModel):
+#     pass  # Empty as the ID is in the URL
 
-class DeleteExamResponse(BaseModel):
-    pass  # Empty as the response is 204 No Content
+# class DeleteExamResponse(BaseModel):
+#     pass  # Empty as the response is 204 No Content
