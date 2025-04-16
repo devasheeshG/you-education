@@ -1,5 +1,5 @@
 # Path: app/routers/exams.py
-# Description: This file contains the routers for the exams API.
+# Description: This file contains the routers for the Exams API.
 
 import uuid
 from datetime import datetime, timezone
@@ -13,6 +13,9 @@ from app.utils.models import (
     UpdateExamRequest,
     UpdateExamResponse,
 )
+from app.logger import get_logger
+
+logger = get_logger()
 
 router = APIRouter(
     prefix="/exams",
@@ -25,17 +28,26 @@ router = APIRouter(
     response_model=ExamCreateResponse,
     responses={
         201: {"description": "Exam created successfully"},
-        400: {"description": "Bad request"},
-        404: {"description": "Subject not found"},
-        409: {"description": "Exam with this name already exists for the subject"},
-        500: {"description": "Internal server error"}
-    }
+        400: {"description": "Bad request - Invalid input data"},
+        404: {"description": "Not found - Subject not found"},
+        409: {"description": "Conflict - Exam with this name already exists for the subject"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Create a new exam",
 )
 def create_exam(
     request: ExamCreateRequest,
     db: Session = Depends(get_db)
 ) -> ExamCreateResponse:
-    """Create a new exam."""
+    """
+    Create a new exam entry for a specific subject.
+    
+    - **name**: Name of the exam (1-100 characters)
+    - **subject_id**: UUID of the subject this exam belongs to
+    - **description**: Optional description of the exam
+    - **exam_datetime**: Date and time when the exam will take place (with timezone)
+    - **total_hours_to_dedicate**: Total study hours needed for preparation (between 1 and 50)
+    """
     try:
         # Check if subject exists
         subject = (
@@ -70,7 +82,7 @@ def create_exam(
 
         db.add(exam)
         db.commit()
-        
+
         # Reload the exam with its subject relationship
         exam = (
             db.query(Exam)
@@ -78,7 +90,7 @@ def create_exam(
             .filter(Exam.id == exam.id)
             .first()
         )
-        
+
         return exam
 
     except HTTPException:
@@ -87,9 +99,10 @@ def create_exam(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error creating exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create exam: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.get(
@@ -97,13 +110,20 @@ def create_exam(
     response_model=ListExamResponse,
     responses={
         200: {"description": "Exams listed successfully"},
-        500: {"description": "Internal server error"}
-    }
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="List all exams",
 )
 def list_exams(
     db: Session = Depends(get_db)
 ) -> ListExamResponse:
-    """List all exams, categorized by upcoming and previous."""
+    """
+    List all exams categorized by upcoming and previous.
+    
+    Returns two arrays:
+    - **upcoming_exams**: Exams scheduled for the future, sorted by date (ascending)
+    - **previous_exams**: Past exams, sorted by date (descending/most recent first)
+    """
     try:
         # Get all exams from database, joining with subjects
         exams = (
@@ -138,9 +158,10 @@ def list_exams(
         )
 
     except Exception as e:
+        logger.error(f"Error listing exams: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list exams: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.put(
@@ -148,17 +169,27 @@ def list_exams(
     response_model=UpdateExamResponse,
     responses={
         200: {"description": "Exam updated successfully"},
-        404: {"description": "Exam or Subject not found"},
-        409: {"description": "Exam name already exists for the subject"},
-        500: {"description": "Internal server error"}
-    }
+        404: {"description": "Not found - Exam or Subject not found"},
+        409: {"description": "Conflict - Exam name already exists for the subject"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Update an existing exam",
 )
 def update_exam(
     exam_id: uuid.UUID,
     request: UpdateExamRequest,
     db: Session = Depends(get_db)
 ) -> UpdateExamResponse:
-    """Update an existing exam."""
+    """
+    Update an existing exam identified by its ID.
+    
+    - **exam_id**: UUID of the exam to update
+    - **name** (optional): New name for the exam (1-100 characters)
+    - **subject_id** (optional): UUID of the new subject this exam belongs to
+    - **description** (optional): New description of the exam
+    - **exam_datetime** (optional): New date and time when the exam will take place
+    - **total_hours_to_dedicate** (optional): New total study hours needed for preparation
+    """
     try:
         # Find the exam, eager load subject
         exam = (
@@ -171,27 +202,24 @@ def update_exam(
         if not exam:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
 
-        update_data = request.model_dump(exclude_unset=True) # Use model_dump for Pydantic v2
-
         # Check if subject_id is being updated and if the new subject exists
-        if "subject_id" in update_data and update_data["subject_id"] != exam.subject_id:
+        if request.subject_id and request.subject_id != exam.subject_id:
             new_subject = (
                 db.query(Subject)
-                .filter(Subject.id == update_data["subject_id"])
+                .filter(Subject.id == request.subject_id)
                 .first()
             )
             if not new_subject:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="New Subject not found")
 
         # Check for unique constraint violation if name or subject_id is changing
-        new_name = update_data.get("name", exam.name)
-        new_subject_id = update_data.get("subject_id", exam.subject_id)
-        if new_name != exam.name or new_subject_id != exam.subject_id:
+        if request.name and request.subject_id:
             existing_exam = (
                 db.query(Exam)
+                
                 .filter(
-                    Exam.name == new_name,
-                    Exam.subject_id == new_subject_id,
+                    Exam.name == request.name,
+                    Exam.subject_id == request.subject_id,
                     Exam.id != exam_id
                 )
                 .first()
@@ -203,9 +231,18 @@ def update_exam(
                 )
 
         # Update fields
-        for key, value in update_data.items():
-            setattr(exam, key, value)
+        if request.name:
+            exam.name = request.name
+        if request.subject_id:
+            exam.subject_id = request.subject_id
+        if request.description:
+            exam.description = request.description
+        if request.exam_datetime:
+            exam.exam_datetime = request.exam_datetime
+        if request.total_hours_to_dedicate:
+            exam.total_hours_to_dedicate = request.total_hours_to_dedicate
 
+        # Commit changes to the database
         db.commit()
         db.refresh(exam)
         # Ensure subject is loaded after refresh if it was changed
@@ -219,25 +256,31 @@ def update_exam(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error updating exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update exam: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.delete(
     "/{exam_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        204: {"description": "Exam deleted successfully"},
-        404: {"description": "Exam not found"},
-        500: {"description": "Internal server error"}
-    }
+        204: {"description": "Exam deleted successfully - No content returned"},
+        404: {"description": "Not found - Exam with the specified ID does not exist"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Delete an exam",
 )
 def delete_exam(
     exam_id: uuid.UUID,
     db: Session = Depends(get_db)
 ):
-    """Delete an exam."""
+    """
+    Delete an exam by its ID.
+    
+    - **exam_id**: UUID of the exam to delete
+    """
     try:
         # Find the exam
         exam = (
@@ -261,7 +304,8 @@ def delete_exam(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error deleting exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete exam: {str(e)}"
+            detail="Failed to create exam."
         )

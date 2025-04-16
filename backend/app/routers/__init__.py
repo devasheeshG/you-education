@@ -2,9 +2,10 @@
 # Description: This file contains the main router of the application.
 
 from fastapi import APIRouter
-from . import exams, subjects
+from . import exams, subjects, references
 
-main_router = APIRouter(prefix="/v1")
+main_router = APIRouter(prefix="/api/v1")
 
 main_router.include_router(subjects.router)
 main_router.include_router(exams.router)
+main_router.include_router(references.router)

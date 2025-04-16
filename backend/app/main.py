@@ -2,7 +2,6 @@
 # Description: Main FastAPI application
 
 import toml, time, uuid
-from datetime import datetime
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 # from fastapi.middleware.cors import CORSMiddleware
@@ -66,7 +65,7 @@ app.add_middleware(LoggingMiddleware)
 # Include routers
 app.include_router(main_router)
 
-@app.get("/health", tags=["Health"])
-async def health_check():
+@app.get("/health", tags=["Health"], include_in_schema=False)
+def health_check():
     """Health check endpoint for monitoring."""
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+    return {"status": "ok"}

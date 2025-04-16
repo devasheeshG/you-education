@@ -1,5 +1,5 @@
 # Path: app/routers/subjects.py
-# Description: This file contains the routers for the subjects API.
+# Description: This file contains the routers for the Subjects API.
 
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,6 +12,9 @@ from app.utils.models import (
     UpdateSubjectRequest,
     UpdateSubjectResponse,
 )
+from app.logger import get_logger
+
+logger = get_logger()
 
 router = APIRouter(
     prefix="/subjects",
@@ -24,16 +27,22 @@ router = APIRouter(
     response_model=SubjectCreateResponse,
     responses={
         201: {"description": "Subject created successfully"},
-        400: {"description": "Bad request"},
-        409: {"description": "Subject already exists"},
-        500: {"description": "Internal server error"}
-    }
+        400: {"description": "Bad request - Invalid input data"},
+        409: {"description": "Conflict - Subject with this name already exists"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Create a new subject",
 )
 def create_subject(
     request: SubjectCreateRequest,
     db: Session = Depends(get_db)
 ) -> SubjectCreateResponse:
-    """Create a new subject."""
+    """
+    Create a new subject with the specified name and color.
+    
+    - **name**: Name of the subject (1-100 characters)
+    - **color**: Hex color code without # (e.g., FF5733)
+    """
     try:
         # Check if subject with the same name already exists
         existing_subject = (
@@ -62,23 +71,27 @@ def create_subject(
     
     except Exception as e:
         db.rollback()
+        logger.error(f"Error creating subject: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create subject: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.get(
     "",
     response_model=ListSubjectResponse,
     responses={
-        200: {"description": "Subjects listed successfully"},
-        500: {"description": "Internal server error"}
-    }
+        200: {"description": "List of subjects retrieved successfully"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="List all subjects",
 )
 def list_subjects(
     db: Session = Depends(get_db)
 ) -> ListSubjectResponse:
-    """List all subjects."""
+    """
+    List all available subjects.
+    """
     try:
         # Get all subjects from database
         subjects = (
@@ -89,9 +102,10 @@ def list_subjects(
         return ListSubjectResponse(subjects=subjects)
     
     except Exception as e:
+        logger.error(f"Error listing subjects: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list subjects: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.put(
@@ -99,17 +113,24 @@ def list_subjects(
     response_model=UpdateSubjectResponse,
     responses={
         200: {"description": "Subject updated successfully"},
-        404: {"description": "Subject not found"},
-        409: {"description": "Subject name already exists"},
-        500: {"description": "Internal server error"}
-    }
+        404: {"description": "Not found - Subject with the specified ID does not exist"},
+        409: {"description": "Conflict - Subject name already exists"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Update an existing subject",
 )
 def update_subject(
     subject_id: uuid.UUID,
     request: UpdateSubjectRequest,
     db: Session = Depends(get_db)
 ) -> UpdateSubjectResponse:
-    """Update an existing subject."""
+    """
+    Update an existing subject identified by its ID.
+    
+    - **subject_id**: UUID of the subject to update
+    - **name** (optional): New name for the subject (1-100 characters)
+    - **color** (optional): New hex color code without # (e.g., FF5733)
+    """
     try:
         # Find the subject
         subject = (
@@ -149,25 +170,31 @@ def update_subject(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error updating subject: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update subject: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.delete(
     "/{subject_id}",
     status_code=204,
     responses={
-        204: {"description": "Subject deleted successfully"},
-        404: {"description": "Subject not found"},
-        500: {"description": "Internal server error"}
-    }
+        204: {"description": "Subject deleted successfully - No content returned"},
+        404: {"description": "Not found - Subject with the specified ID does not exist"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Delete a subject",
 )
 def delete_subject(
     subject_id: uuid.UUID,
     db: Session = Depends(get_db)
 ):
-    """Delete a subject."""
+    """
+    Delete a subject by its ID.
+    
+    - **subject_id**: UUID of the subject to delete
+    """
     try:
         # Find the subject
         subject = (
@@ -191,7 +218,8 @@ def delete_subject(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error deleting subject: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete subject: {str(e)}"
+            detail="Failed to create exam."
         )

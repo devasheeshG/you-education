@@ -16,6 +16,16 @@ from .exams import (
     UpdateExamResponse,
 )
 
+from .references import (
+    ReferencesTypeEnum,
+    ReferenceCreateRequest,
+    ReferenceCreateResponse,
+    ReferenceUploadResponse,
+    ReferenceItem,
+    ListReferenceResponse,
+    DownloadReferenceResponse,
+)
+
 __all__ = [
     # Subjects
     "SubjectCreateRequest",
@@ -30,4 +40,13 @@ __all__ = [
     "ListExamResponse",
     "UpdateExamRequest",
     "UpdateExamResponse",
+    
+    # References
+    "ReferencesTypeEnum",
+    "ReferenceCreateRequest",
+    "ReferenceCreateResponse",
+    "ReferenceUploadResponse",
+    "ReferenceItem",
+    "ListReferenceResponse",
+    "DownloadReferenceResponse",
 ]
