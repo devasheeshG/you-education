@@ -39,13 +39,6 @@ def create_subject(
     
     - **name**: Name of the subject (1-100 characters)
     - **color**: Hex color code without # (e.g., FF5733)
-    
-    Returns the created subject with its assigned ID.
-    
-    Raises:
-    - 400: If the input data is invalid
-    - 409: If a subject with the same name already exists
-    - 500: If an unexpected error occurs
     """
     try:
         # Check if subject with the same name already exists
@@ -94,11 +87,6 @@ def list_subjects(
 ) -> ListSubjectResponse:
     """
     List all available subjects.
-    
-    Returns an array of subjects with their IDs, names, and colors.
-    
-    Raises:
-    - 500: If an unexpected error occurs during retrieval
     """
     try:
         # Get all subjects from database
@@ -137,13 +125,6 @@ def update_subject(
     - **subject_id**: UUID of the subject to update
     - **name** (optional): New name for the subject (1-100 characters)
     - **color** (optional): New hex color code without # (e.g., FF5733)
-    
-    Returns the updated subject.
-    
-    Raises:
-    - 404: If the subject does not exist
-    - 409: If attempting to update to a name that already exists
-    - 500: If an unexpected error occurs during update
     """
     try:
         # Find the subject
@@ -207,12 +188,6 @@ def delete_subject(
     Delete a subject by its ID.
     
     - **subject_id**: UUID of the subject to delete
-    
-    Returns no content on successful deletion.
-    
-    Raises:
-    - 404: If the subject does not exist
-    - 500: If an unexpected error occurs during deletion
     """
     try:
         # Find the subject

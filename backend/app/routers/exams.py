@@ -44,14 +44,6 @@ def create_exam(
     - **description**: Optional description of the exam
     - **exam_datetime**: Date and time when the exam will take place (with timezone)
     - **total_hours_to_dedicate**: Total study hours needed for preparation (between 1 and 50)
-    
-    Returns the created exam with its assigned ID and associated subject details.
-    
-    Raises:
-    - 400: If the input data is invalid
-    - 404: If the specified subject doesn't exist
-    - 409: If an exam with the same name already exists for the subject
-    - 500: If an unexpected error occurs
     """
     try:
         # Check if subject exists
@@ -87,7 +79,7 @@ def create_exam(
 
         db.add(exam)
         db.commit()
-        
+
         # Reload the exam with its subject relationship
         exam = (
             db.query(Exam)
@@ -95,7 +87,7 @@ def create_exam(
             .filter(Exam.id == exam.id)
             .first()
         )
-        
+
         return exam
 
     except HTTPException:
@@ -127,11 +119,6 @@ def list_exams(
     Returns two arrays:
     - **upcoming_exams**: Exams scheduled for the future, sorted by date (ascending)
     - **previous_exams**: Past exams, sorted by date (descending/most recent first)
-    
-    Each exam includes its details and the associated subject information.
-    
-    Raises:
-    - 500: If an unexpected error occurs during retrieval
     """
     try:
         # Get all exams from database, joining with subjects
@@ -197,13 +184,6 @@ def update_exam(
     - **description** (optional): New description of the exam
     - **exam_datetime** (optional): New date and time when the exam will take place
     - **total_hours_to_dedicate** (optional): New total study hours needed for preparation
-    
-    Returns the updated exam with its complete details and associated subject.
-    
-    Raises:
-    - 404: If the exam or new subject doesn't exist
-    - 409: If attempting to update to a name that already exists for the subject
-    - 500: If an unexpected error occurs during update
     """
     try:
         # Find the exam, eager load subject
@@ -217,27 +197,24 @@ def update_exam(
         if not exam:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
 
-        update_data = request.model_dump(exclude_unset=True) # Use model_dump for Pydantic v2
-
         # Check if subject_id is being updated and if the new subject exists
-        if "subject_id" in update_data and update_data["subject_id"] != exam.subject_id:
+        if request.subject_id and request.subject_id != exam.subject_id:
             new_subject = (
                 db.query(Subject)
-                .filter(Subject.id == update_data["subject_id"])
+                .filter(Subject.id == request.subject_id)
                 .first()
             )
             if not new_subject:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="New Subject not found")
 
         # Check for unique constraint violation if name or subject_id is changing
-        new_name = update_data.get("name", exam.name)
-        new_subject_id = update_data.get("subject_id", exam.subject_id)
-        if new_name != exam.name or new_subject_id != exam.subject_id:
+        if request.name and request.subject_id:
             existing_exam = (
                 db.query(Exam)
+                
                 .filter(
-                    Exam.name == new_name,
-                    Exam.subject_id == new_subject_id,
+                    Exam.name == request.name,
+                    Exam.subject_id == request.subject_id,
                     Exam.id != exam_id
                 )
                 .first()
@@ -288,12 +265,6 @@ def delete_exam(
     Delete an exam by its ID.
     
     - **exam_id**: UUID of the exam to delete
-    
-    Returns no content on successful deletion.
-    
-    Raises:
-    - 404: If the exam doesn't exist
-    - 500: If an unexpected error occurs during deletion
     """
     try:
         # Find the exam
