@@ -48,18 +48,18 @@ const Chat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 bg-opacity-70">
-      <div className="p-3 bg-gradient-to-r from-blue-800 to-indigo-900 text-white font-medium flex items-center justify-between">
+    <div className="flex flex-col h-full border border-border rounded-md">
+      <div className="p-3 bg-secondary border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <span>AI Chat Assistant</span>
+          <span className="font-medium">AI Chat Assistant</span>
         </div>
-        <span className="text-xs bg-blue-500 rounded-full px-2 py-1">Online</span>
+        <span className="text-xs bg-primary text-primary-foreground rounded-full px-2 py-1">Online</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-blue-700 scrollbar-track-gray-800">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -70,8 +70,8 @@ const Chat: React.FC = () => {
             <div
               className={`max-w-[80%] p-3 rounded-lg ${
                 message.sender === 'user'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white'
-                  : 'glassmorphism border border-gray-700 text-gray-100'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground'
               }`}
             >
               <p className="text-sm md:text-base">{message.text}</p>
@@ -86,18 +86,18 @@ const Chat: React.FC = () => {
         ))}
       </div>
 
-      <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-800">
+      <form onSubmit={handleSendMessage} className="p-3 border-t border-border">
         <div className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Ask a question about this exam..."
-            className="flex-1 p-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-white"
+            className="flex-1 p-3 rounded-md border border-input focus:border-ring focus:ring-1 focus:ring-ring outline-none bg-background"
           />
           <button
             type="submit"
-            className="futuristic-button flex items-center gap-2"
+            className="btn btn-primary flex items-center gap-2"
             disabled={!newMessage.trim()}
           >
             <span>Send</span>

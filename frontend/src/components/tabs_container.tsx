@@ -18,15 +18,15 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
   const [activeTab, setActiveTab] = useState(defaultActive || tabKeys[0]);
 
   return (
-    <div className={`flex flex-col h-full glassmorphism overflow-hidden ${className}`}>
-      <div className="flex border-b border-gray-800 bg-gray-900 bg-opacity-60">
+    <div className={`flex flex-col h-full border border-border rounded-md overflow-hidden ${className}`}>
+      <div className="flex border-b border-border bg-secondary">
         {tabKeys.map((tabKey) => (
           <button
             key={tabKey}
             className={`px-6 py-3 font-medium text-sm transition-all ${
               activeTab === tabKey
-                ? 'bg-opacity-80 bg-gradient-to-b from-blue-600 to-indigo-900 text-white border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800 hover:bg-opacity-40'
+                ? 'bg-primary text-primary-foreground border-b-2 border-primary'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
             onClick={() => setActiveTab(tabKey)}
           >

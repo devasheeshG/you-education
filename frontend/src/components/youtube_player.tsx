@@ -4,8 +4,8 @@ import ReactPlayer from "react-player/youtube";
 
 const YouTubePlayer = ({ url }: { url: string }) => {
   return (
-    <div className="relative w-full h-full pt-[56.25%]"> {/* 16:9 aspect ratio wrapper */}
-      <div className="absolute top-0 left-0 w-full h-full">
+    <div className="relative w-full h-full pt-[56.25%] border border-border rounded-md overflow-hidden"> {/* 16:9 aspect ratio wrapper with border */}
+      <div className="absolute top-0 left-0 w-full h-full bg-black">
         <ReactPlayer 
           url={url} 
           width="100%" 
