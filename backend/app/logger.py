@@ -1,4 +1,5 @@
 # Path: app/logger.py
+# Description: This file contains the logger configuration for the application.
 
 from functools import lru_cache
 import logging

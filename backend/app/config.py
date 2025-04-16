@@ -1,4 +1,4 @@
-# Path: app/env.py
+# Path: app/config.py
 # Description: This file contains code to load `.env` file and make a pydantic `BaseSettings` class which can be used to access environment variables in the application.
 
 from pydantic_settings import BaseSettings
