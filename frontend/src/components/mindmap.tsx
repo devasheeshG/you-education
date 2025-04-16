@@ -131,7 +131,6 @@ export default function MindmapPage() {
 
   return (
     <div className="flex flex-col items-center w-full">
-      <h1 className="text-2xl font-bold my-4">Exam Mindmap</h1>
       <div className="w-full h-screen bg-white rounded-lg shadow-md p-4">
         <svg ref={svgRef} className="w-full h-full" />
       </div>
