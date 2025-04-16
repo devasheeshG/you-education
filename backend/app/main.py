@@ -21,12 +21,12 @@ with open("pyproject.toml", "r") as file:
     config = toml.load(file)
 
 app = FastAPI(
-    title="Study Planner API",
-    description="API for managing study subjects and exams",
+    title=config["tool"]["poetry"]["name"],
+    description=config["tool"]["poetry"]["description"],
     version=config["tool"]["poetry"]["version"],
-    openapi_url="/api/openapi.json",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json" if settings.ENV == "development" else None,
+    docs_url="/api/docs" if settings.ENV == "development" else None,
+    redoc_url="/api/redoc" if settings.ENV == "development" else None,
 )
 
 # Advanced Middleware
