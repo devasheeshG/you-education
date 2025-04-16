@@ -15,7 +15,7 @@ from sqlalchemy import (
     UniqueConstraint
 )
 from sqlalchemy.orm import relationship
-from app.utils.models import ReferenceTypeEnum
+from app.utils.models import ReferencesTypeEnum
 
 class Subject(DatabaseBase):
     __tablename__ = "subjects"
@@ -55,7 +55,7 @@ class Reference(DatabaseBase):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     exam_id = Column(UUID(as_uuid=True), nullable=False)
-    file_type = Column(SQLEnum(ReferenceTypeEnum), nullable=False)
+    file_type = Column(SQLEnum(ReferencesTypeEnum), nullable=False)
     file_name = Column(String, nullable=False)
 
     # Define relationship to Exam
