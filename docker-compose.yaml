@@ -1,4 +1,15 @@
 services:
+  you-education-backend-init-postgres-migration:
+    image: you-education-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: you-education-backend-init-postgres-migration
+    command: sh -c "poetry run alembic upgrade head"
+    volumes:
+      - ./backend:/app
+    networks:
+      - personal_prod
   you-education-backend:
     image: you-education-backend:latest
     build:
@@ -8,6 +19,9 @@ services:
     command: uvicorn app.main:app --log-level debug --host 0.0.0.0 --port 80
     volumes:
       - ./backend:/app
+    depends_on:
+      you-education-backend-init-postgres-migration:
+        condition: service_completed_successfully
     labels:
       - traefik.enable=true
       - traefik.http.routers.you-education-backend.rule=Host(`you-education.devasheeshmishra.com`) && PathPrefix(`/api`)
