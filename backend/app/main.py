@@ -66,6 +66,6 @@ app.add_middleware(LoggingMiddleware)
 app.include_router(main_router)
 
 @app.get("/health", tags=["Health"], include_in_schema=False)
-async def health_check():
+def health_check():
     """Health check endpoint for monitoring."""
     return {"status": "ok"}

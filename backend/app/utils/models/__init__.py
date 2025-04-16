@@ -18,6 +18,8 @@ from .exams import (
 
 from .references import (
     ReferencesTypeEnum,
+    ReferenceCreateRequest,
+    ReferenceCreateResponse,
     ReferenceUploadResponse,
     ReferenceItem,
     ListReferenceResponse,
@@ -41,6 +43,8 @@ __all__ = [
     
     # References
     "ReferencesTypeEnum",
+    "ReferenceCreateRequest",
+    "ReferenceCreateResponse",
     "ReferenceUploadResponse",
     "ReferenceItem",
     "ListReferenceResponse",
