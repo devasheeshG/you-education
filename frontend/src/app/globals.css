@@ -4,21 +4,25 @@
   --background: #ffffff;
   --foreground: #171717;
   
-  /* Futuristic color scheme */
-  --primary: #3B82F6;
-  --primary-glow: rgba(59, 130, 246, 0.5);
-  --secondary: #10B981;
-  --secondary-glow: rgba(16, 185, 129, 0.5);
-  --accent: #8B5CF6; 
-  --accent-glow: rgba(139, 92, 246, 0.5);
-  --card-bg: rgba(255, 255, 255, 0.8);
-  --card-border: rgba(255, 255, 255, 0.5);
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  --glassmorphism-bg: rgba(255, 255, 255, 0.7);
-  --glassmorphism-border: rgba(255, 255, 255, 0.18);
-  --glassmorphism-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  --gradient-start: #4F46E5;
-  --gradient-end: #0EA5E9;
+  /* Minimalistic color scheme */
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #18181b;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #f8fafc;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #18181b;
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -30,24 +34,27 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #09090b;
+    --foreground: #fafafa;
     
-    /* Dark mode futuristic colors */
-    --primary: #4F46E5;
-    --primary-glow: rgba(79, 70, 229, 0.5);
-    --secondary: #10B981;
-    --secondary-glow: rgba(16, 185, 129, 0.5);
-    --accent: #8B5CF6;
-    --accent-glow: rgba(139, 92, 246, 0.5);
-    --card-bg: rgba(17, 24, 39, 0.8);
-    --card-border: rgba(255, 255, 255, 0.1);
-    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    --glassmorphism-bg: rgba(17, 24, 39, 0.7);
-    --glassmorphism-border: rgba(255, 255, 255, 0.08);
-    --glassmorphism-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
-    --gradient-start: #4F46E5;
-    --gradient-end: #0EA5E9;
+    /* Dark mode minimalistic colors */
+    --card: #09090b;
+    --card-foreground: #fafafa;
+    --popover: #09090b;
+    --popover-foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --secondary-foreground: #fafafa;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --accent: #27272a;
+    --accent-foreground: #fafafa;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fef2f2;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #d4d4d8;
   }
 }
 
@@ -55,117 +62,162 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
 }
 
-/* Glassmorphism effect */
-.glassmorphism {
-  background: var(--glassmorphism-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 12px;
-  border: 1px solid var(--glassmorphism-border);
-  box-shadow: var(--glassmorphism-shadow);
+/* Card styling */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
 }
 
-/* Futuristic card */
-.futuristic-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.futuristic-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-/* Glowing text */
-.glow-text {
-  text-shadow: 0 0 10px var(--primary-glow);
-}
-
-/* Futuristic button */
-.futuristic-button {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-  color: white;
-  border: none;
-  border-radius: 30px;
-  padding: 10px 20px;
+/* Button styling */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
   font-weight: 500;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
-}
-
-.futuristic-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.6);
-}
-
-/* Animated gradient background */
-.animated-gradient {
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradient 15s ease infinite;
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Glow effect */
-.glow {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   position: relative;
 }
 
-.glow::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  box-shadow: 0 0 30px var(--primary-glow);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
-.glow:hover::after {
-  opacity: 1;
+.btn-primary:hover {
+  opacity: 0.9;
 }
 
-/* Grid layout for modular components */
-.modular-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+.btn-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.btn-secondary:hover {
+  opacity: 0.9;
+}
+
+.btn-outline {
+  border: 1px solid var(--border);
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.btn-outline:hover {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+/* Form elements */
+.form-input {
   width: 100%;
+  padding: 0.5rem;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
 }
-  
-/* Animation for modal appearance */
-@keyframes appear {
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  ring: 1px solid var(--ring);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--ring);
+  ring: 1px solid var(--ring);
+}
+
+/* Badge styling */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  height: 1.25rem;
+}
+
+.badge-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.badge-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+/* Modal styling */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--background);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  box-shadow: 0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+  animation: modalAppear 0.2s ease-out forwards;
+}
+
+@keyframes modalAppear {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.98);
   }
   to {
     opacity: 1;
     transform: scale(1);
   }
-}
-
-.animate-appear {
-  animation: appear 0.3s ease-out forwards;
 }

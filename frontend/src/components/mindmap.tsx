@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Transformer } from 'markmap-lib';
 import { Markmap } from 'markmap-view';
 import { INode } from 'markmap-common';
@@ -48,6 +48,32 @@ const examData: MindMapNode = {
   ]
 };
 
+// Helper functions moved outside of the component
+function childToMarkdown(node: MindMapNode, level: number): string {
+  const heading = '#'.repeat(level);
+  let markdown = `${heading} ${node.content}\n`;
+  
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(child => {
+      markdown += childToMarkdown(child, level + 1);
+    });
+  }
+  
+  return markdown;
+}
+
+function examDataToMarkdown(node: MindMapNode): string {
+  let markdown = `# ${node.content}\n`;
+  
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(child => {
+      markdown += childToMarkdown(child, 2);
+    });
+  }
+  
+  return markdown;
+}
+
 // Function to transform our custom data structure to the format required by markmap
 const transformer = new Transformer();
 
@@ -67,16 +93,17 @@ export default function MindmapPage() {
     // Transform our data to the format expected by markmap
     const { root } = transformer.transform(examDataToMarkdown(examData));
     
-    // Create the markmap
+    // Create the markmap with minimalist black and white theme
     const mm = Markmap.create(svgRef.current, {
       autoFit: true, // Automatically fits the mindmap to the viewport
       initialExpandLevel: 1, // Only expand the first level (root and immediate children)
       color: (node: INode) => {
-        // Customize colors based on node depth or content
-        const colors = ['#0077b6', '#00b4d8', '#90e0ef', '#caf0f8'];
+        // Use monochromatic grayscale color scheme
+        const colors = ['#18181b', '#27272a', '#3f3f46', '#52525b', '#71717a'];
         const depth = node.state?.depth || 0;
         return colors[Math.min(depth, colors.length - 1)];
       },
+      paddingX: 16, // Add more horizontal padding
     }, root);
     
     markmapRef.current = mm;
@@ -97,42 +124,9 @@ export default function MindmapPage() {
     };
   }, []);
 
-  // Convert our data structure to markdown format that markmap can understand
-  const examDataToMarkdown = (node: MindMapNode): string => {
-    let markdown = `# ${node.content}\n`;
-    
-    if (node.children && node.children.length > 0) {
-      node.children.forEach(child => {
-        // Convert each child to markdown with increased heading level
-        const childMarkdown = childToMarkdown(child, 2);
-        markdown += childMarkdown;
-      });
-    }
-    
-    return markdown;
-  };
-  
-  // Helper function to convert child nodes to markdown with proper heading levels
-  const childToMarkdown = (node: MindMapNode, level: number): string => {
-    // Create the appropriate heading based on level (e.g., ##, ###, etc.)
-    const heading = '#'.repeat(level);
-    let markdown = `${heading} ${node.content}\n`;
-    
-    if (node.children && node.children.length > 0) {
-      node.children.forEach(child => {
-        // Recursively convert each child to markdown with increased heading level
-        const childMarkdown = childToMarkdown(child, level + 1);
-        markdown += childMarkdown;
-      });
-    }
-    
-    return markdown;
-  };
-
   return (
     <div className="flex flex-col items-center w-full">
-      <h1 className="text-2xl font-bold my-4">Exam Mindmap</h1>
-      <div className="w-full h-screen bg-white rounded-lg shadow-md p-4">
+      <div className="w-full h-screen bg-background rounded-md border border-border p-4">
         <svg ref={svgRef} className="w-full h-full" />
       </div>
     </div>
