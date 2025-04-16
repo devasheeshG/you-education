@@ -36,7 +36,11 @@ def create_subject(
     """Create a new subject."""
     try:
         # Check if subject with the same name already exists
-        existing_subject = db.query(Subject).filter(Subject.name == request.name).first()
+        existing_subject = (
+            db.query(Subject)
+            .filter(Subject.name == request.name)
+            .first()
+        )
         if existing_subject:
             raise HTTPException(status_code=409, detail="Subject with this name already exists")
         
@@ -77,7 +81,10 @@ def list_subjects(
     """List all subjects."""
     try:
         # Get all subjects from database
-        subjects = db.query(Subject).all()
+        subjects = (
+            db.query(Subject)
+            .all()
+        )
         
         return ListSubjectResponse(subjects=subjects)
     
@@ -105,14 +112,22 @@ def update_subject(
     """Update an existing subject."""
     try:
         # Find the subject
-        subject = db.query(Subject).filter(Subject.id == subject_id).first()
+        subject = (
+            db.query(Subject)
+            .filter(Subject.id == subject_id)
+            .first()
+        )
         
         if not subject:
             raise HTTPException(status_code=404, detail="Subject not found")
         
         # Check if the new name already exists
         if request.name is not None:
-            existing_subject = db.query(Subject).filter(Subject.name == request.name).first()
+            existing_subject = (
+                db.query(Subject)
+                .filter(Subject.name == request.name)
+                .first()
+            )
             if existing_subject and existing_subject.id != subject_id:
                 raise HTTPException(status_code=409, detail="Subject with this name already exists")
         
@@ -155,7 +170,11 @@ def delete_subject(
     """Delete a subject."""
     try:
         # Find the subject
-        subject = db.query(Subject).filter(Subject.id == subject_id).first()
+        subject = (
+            db.query(Subject)
+            .filter(Subject.id == subject_id)
+            .first()
+        )
         
         if not subject:
             raise HTTPException(status_code=404, detail="Subject not found")
