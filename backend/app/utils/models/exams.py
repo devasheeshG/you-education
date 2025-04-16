@@ -12,7 +12,7 @@ class ExamCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Name of the exam")
     subject_id: uuid.UUID = Field(..., description="ID of the subject this exam belongs to")
     description: Optional[str] = Field(None, description="Description of the exam")
-    exam_datetime: datetime = Field(..., description="Date and time of the exam")
+    exam_datetime: datetime = Field(..., description="Date and time of the exam with timezone")
     total_hours_to_dedicate: float = Field(..., ge=1, le=50, description="Total hours to dedicate to studying")
 
 class ExamCreateResponse(BaseModel):
@@ -47,7 +47,7 @@ class UpdateExamRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Name of the exam")
     subject_id: Optional[uuid.UUID] = Field(None, description="ID of the subject this exam belongs to")
     description: Optional[str] = Field(None, description="Description of the exam")
-    exam_datetime: Optional[datetime] = Field(None, description="Date and time of the exam")
+    exam_datetime: Optional[datetime] = Field(None, description="Date and time of the exam with timezone")
     total_hours_to_dedicate: Optional[float] = Field(None, ge=1, le=50, description="Total hours to dedicate to studying")
 
 class UpdateExamResponse(BaseModel):
@@ -64,3 +64,10 @@ class UpdateExamResponse(BaseModel):
 
 # class DeleteExamResponse(BaseModel):
 #     pass  # Empty as the response is 204 No Content
+
+# Configure Pydantic models to handle datetime with timezone
+class Config:
+    json_encoders = {
+        datetime: lambda v: v.isoformat(),
+    }
+    populate_by_name = True

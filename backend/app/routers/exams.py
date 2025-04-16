@@ -25,17 +25,35 @@ router = APIRouter(
     response_model=ExamCreateResponse,
     responses={
         201: {"description": "Exam created successfully"},
-        400: {"description": "Bad request"},
-        404: {"description": "Subject not found"},
-        409: {"description": "Exam with this name already exists for the subject"},
-        500: {"description": "Internal server error"}
-    }
+        400: {"description": "Bad request - Invalid input data"},
+        404: {"description": "Not found - Subject not found"},
+        409: {"description": "Conflict - Exam with this name already exists for the subject"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Create a new exam",
+    description="Creates a new exam for a specific subject with details including name, date/time, and study hours required."
 )
 def create_exam(
     request: ExamCreateRequest,
     db: Session = Depends(get_db)
 ) -> ExamCreateResponse:
-    """Create a new exam."""
+    """
+    Create a new exam entry for a specific subject.
+    
+    - **name**: Name of the exam (1-100 characters)
+    - **subject_id**: UUID of the subject this exam belongs to
+    - **description**: Optional description of the exam
+    - **exam_datetime**: Date and time when the exam will take place (with timezone)
+    - **total_hours_to_dedicate**: Total study hours needed for preparation (between 1 and 50)
+    
+    Returns the created exam with its assigned ID and associated subject details.
+    
+    Raises:
+    - 400: If the input data is invalid
+    - 404: If the specified subject doesn't exist
+    - 409: If an exam with the same name already exists for the subject
+    - 500: If an unexpected error occurs
+    """
     try:
         # Check if subject exists
         subject = (
@@ -97,13 +115,26 @@ def create_exam(
     response_model=ListExamResponse,
     responses={
         200: {"description": "Exams listed successfully"},
-        500: {"description": "Internal server error"}
-    }
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="List all exams",
+    description="Retrieves all exams categorized into upcoming and previous based on the current date and time."
 )
 def list_exams(
     db: Session = Depends(get_db)
 ) -> ListExamResponse:
-    """List all exams, categorized by upcoming and previous."""
+    """
+    List all exams categorized by upcoming and previous.
+    
+    Returns two arrays:
+    - **upcoming_exams**: Exams scheduled for the future, sorted by date (ascending)
+    - **previous_exams**: Past exams, sorted by date (descending/most recent first)
+    
+    Each exam includes its details and the associated subject information.
+    
+    Raises:
+    - 500: If an unexpected error occurs during retrieval
+    """
     try:
         # Get all exams from database, joining with subjects
         exams = (
@@ -148,17 +179,35 @@ def list_exams(
     response_model=UpdateExamResponse,
     responses={
         200: {"description": "Exam updated successfully"},
-        404: {"description": "Exam or Subject not found"},
-        409: {"description": "Exam name already exists for the subject"},
-        500: {"description": "Internal server error"}
-    }
+        404: {"description": "Not found - Exam or Subject not found"},
+        409: {"description": "Conflict - Exam name already exists for the subject"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Update an existing exam",
+    description="Updates the details of an existing exam. Only the fields that are provided will be updated."
 )
 def update_exam(
     exam_id: uuid.UUID,
     request: UpdateExamRequest,
     db: Session = Depends(get_db)
 ) -> UpdateExamResponse:
-    """Update an existing exam."""
+    """
+    Update an existing exam identified by its ID.
+    
+    - **exam_id**: UUID of the exam to update
+    - **name** (optional): New name for the exam (1-100 characters)
+    - **subject_id** (optional): UUID of the new subject this exam belongs to
+    - **description** (optional): New description of the exam
+    - **exam_datetime** (optional): New date and time when the exam will take place
+    - **total_hours_to_dedicate** (optional): New total study hours needed for preparation
+    
+    Returns the updated exam with its complete details and associated subject.
+    
+    Raises:
+    - 404: If the exam or new subject doesn't exist
+    - 409: If attempting to update to a name that already exists for the subject
+    - 500: If an unexpected error occurs during update
+    """
     try:
         # Find the exam, eager load subject
         exam = (
@@ -228,16 +277,28 @@ def update_exam(
     "/{exam_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        204: {"description": "Exam deleted successfully"},
-        404: {"description": "Exam not found"},
-        500: {"description": "Internal server error"}
-    }
+        204: {"description": "Exam deleted successfully - No content returned"},
+        404: {"description": "Not found - Exam with the specified ID does not exist"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Delete an exam",
+    description="Deletes an exam by its ID."
 )
 def delete_exam(
     exam_id: uuid.UUID,
     db: Session = Depends(get_db)
 ):
-    """Delete an exam."""
+    """
+    Delete an exam by its ID.
+    
+    - **exam_id**: UUID of the exam to delete
+    
+    Returns no content on successful deletion.
+    
+    Raises:
+    - 404: If the exam doesn't exist
+    - 500: If an unexpected error occurs during deletion
+    """
     try:
         # Find the exam
         exam = (
