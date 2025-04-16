@@ -15,9 +15,9 @@ sqlalchemy-utils = "^0.41.2"
 pydantic-settings = "^2.7.1"
 psycopg2-binary = "^2.9.10"
 colorlog = "^6.9.0"
-alembic = "^1.14.0"
 uvicorn = "^0.34.0"
 toml = "^0.10.2"
+alembic = "^1.15.2"
 
 [build-system]
 requires = ["poetry-core"]

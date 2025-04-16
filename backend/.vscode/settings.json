@@ -7,7 +7,7 @@
         "**/Thumbs.db": true,
         ".vscode": true,
         "poetry.lock": true,
-        "__pycache__": true,
+        "**/__pycache__": true,
         ".venv": true,
     }
 }
