@@ -122,14 +122,13 @@ def list_exams(
             if exam_dt_aware.tzinfo is None:
                 # Assuming UTC if no timezone info (adjust if DB stores differently)
                 exam_dt_aware = exam_dt_aware.replace(tzinfo=timezone.utc)
-
-            exam_item = ExamItem.model_validate(exam) # Use model_validate for Pydantic v2
+            
             if exam_dt_aware >= now:
-                upcoming_exams.append(exam_item)
+                upcoming_exams.append(exam)
             else:
-                previous_exams.append(exam_item)
+                previous_exams.append(exam)
 
-        # Sort exams (optional, e.g., by date)
+        # Sort exams by date
         upcoming_exams.sort(key=lambda x: x.exam_datetime)
         previous_exams.sort(key=lambda x: x.exam_datetime, reverse=True)
 
