@@ -24,16 +24,30 @@ router = APIRouter(
     response_model=SubjectCreateResponse,
     responses={
         201: {"description": "Subject created successfully"},
-        400: {"description": "Bad request"},
-        409: {"description": "Subject already exists"},
-        500: {"description": "Internal server error"}
-    }
+        400: {"description": "Bad request - Invalid input data"},
+        409: {"description": "Conflict - Subject with this name already exists"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Create a new subject",
+    description="Creates a new subject with the given name and color. The color must be a valid hex color code without the # symbol."
 )
 def create_subject(
     request: SubjectCreateRequest,
     db: Session = Depends(get_db)
 ) -> SubjectCreateResponse:
-    """Create a new subject."""
+    """
+    Create a new subject with the specified name and color.
+    
+    - **name**: Name of the subject (1-100 characters)
+    - **color**: Hex color code without # (e.g., FF5733)
+    
+    Returns the created subject with its assigned ID.
+    
+    Raises:
+    - 400: If the input data is invalid
+    - 409: If a subject with the same name already exists
+    - 500: If an unexpected error occurs
+    """
     try:
         # Check if subject with the same name already exists
         existing_subject = (
@@ -71,14 +85,23 @@ def create_subject(
     "",
     response_model=ListSubjectResponse,
     responses={
-        200: {"description": "Subjects listed successfully"},
-        500: {"description": "Internal server error"}
-    }
+        200: {"description": "List of subjects retrieved successfully"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="List all subjects",
+    description="Retrieves a list of all subjects in the system."
 )
 def list_subjects(
     db: Session = Depends(get_db)
 ) -> ListSubjectResponse:
-    """List all subjects."""
+    """
+    List all available subjects.
+    
+    Returns an array of subjects with their IDs, names, and colors.
+    
+    Raises:
+    - 500: If an unexpected error occurs during retrieval
+    """
     try:
         # Get all subjects from database
         subjects = (
@@ -99,17 +122,32 @@ def list_subjects(
     response_model=UpdateSubjectResponse,
     responses={
         200: {"description": "Subject updated successfully"},
-        404: {"description": "Subject not found"},
-        409: {"description": "Subject name already exists"},
-        500: {"description": "Internal server error"}
-    }
+        404: {"description": "Not found - Subject with the specified ID does not exist"},
+        409: {"description": "Conflict - Subject name already exists"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Update an existing subject",
+    description="Updates the name and/or color of an existing subject. Only the fields that are provided will be updated."
 )
 def update_subject(
     subject_id: uuid.UUID,
     request: UpdateSubjectRequest,
     db: Session = Depends(get_db)
 ) -> UpdateSubjectResponse:
-    """Update an existing subject."""
+    """
+    Update an existing subject identified by its ID.
+    
+    - **subject_id**: UUID of the subject to update
+    - **name** (optional): New name for the subject (1-100 characters)
+    - **color** (optional): New hex color code without # (e.g., FF5733)
+    
+    Returns the updated subject.
+    
+    Raises:
+    - 404: If the subject does not exist
+    - 409: If attempting to update to a name that already exists
+    - 500: If an unexpected error occurs during update
+    """
     try:
         # Find the subject
         subject = (
@@ -158,16 +196,28 @@ def update_subject(
     "/{subject_id}",
     status_code=204,
     responses={
-        204: {"description": "Subject deleted successfully"},
-        404: {"description": "Subject not found"},
-        500: {"description": "Internal server error"}
-    }
+        204: {"description": "Subject deleted successfully - No content returned"},
+        404: {"description": "Not found - Subject with the specified ID does not exist"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Delete a subject",
+    description="Deletes a subject by its ID. All related data will also be deleted."
 )
 def delete_subject(
     subject_id: uuid.UUID,
     db: Session = Depends(get_db)
 ):
-    """Delete a subject."""
+    """
+    Delete a subject by its ID.
+    
+    - **subject_id**: UUID of the subject to delete
+    
+    Returns no content on successful deletion.
+    
+    Raises:
+    - 404: If the subject does not exist
+    - 500: If an unexpected error occurs during deletion
+    """
     try:
         # Find the subject
         subject = (
