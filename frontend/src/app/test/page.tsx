@@ -1,5 +1,5 @@
 'use client';
-import YouTubePlayer from "@/components/youtube_player/youtube_player";
+import YouTubePlayer from "@/components/youtube_player";
 export default function TestPage() {
     return (
         <div className="flex flex-col items-center justify-center h-screen">
