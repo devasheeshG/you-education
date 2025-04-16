@@ -13,6 +13,9 @@ from app.utils.models import (
     UpdateExamRequest,
     UpdateExamResponse,
 )
+from app.logger import get_logger
+
+logger = get_logger()
 
 router = APIRouter(
     prefix="/exams",
@@ -96,9 +99,10 @@ def create_exam(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error creating exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create exam: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.get(
@@ -154,9 +158,10 @@ def list_exams(
         )
 
     except Exception as e:
+        logger.error(f"Error listing exams: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list exams: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.put(
@@ -226,9 +231,18 @@ def update_exam(
                 )
 
         # Update fields
-        for key, value in update_data.items():
-            setattr(exam, key, value)
+        if request.name:
+            exam.name = request.name
+        if request.subject_id:
+            exam.subject_id = request.subject_id
+        if request.description:
+            exam.description = request.description
+        if request.exam_datetime:
+            exam.exam_datetime = request.exam_datetime
+        if request.total_hours_to_dedicate:
+            exam.total_hours_to_dedicate = request.total_hours_to_dedicate
 
+        # Commit changes to the database
         db.commit()
         db.refresh(exam)
         # Ensure subject is loaded after refresh if it was changed
@@ -242,9 +256,10 @@ def update_exam(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error updating exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update exam: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.delete(
@@ -289,7 +304,8 @@ def delete_exam(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error deleting exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete exam: {str(e)}"
+            detail="Failed to create exam."
         )

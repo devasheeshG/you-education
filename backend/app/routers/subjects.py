@@ -12,6 +12,9 @@ from app.utils.models import (
     UpdateSubjectRequest,
     UpdateSubjectResponse,
 )
+from app.logger import get_logger
+
+logger = get_logger()
 
 router = APIRouter(
     prefix="/subjects",
@@ -68,9 +71,10 @@ def create_subject(
     
     except Exception as e:
         db.rollback()
+        logger.error(f"Error creating subject: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to create subject: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.get(
@@ -98,9 +102,10 @@ def list_subjects(
         return ListSubjectResponse(subjects=subjects)
     
     except Exception as e:
+        logger.error(f"Error listing subjects: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list subjects: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.put(
@@ -165,9 +170,10 @@ def update_subject(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error updating subject: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to update subject: {str(e)}"
+            detail="Failed to create exam."
         )
 
 @router.delete(
@@ -212,7 +218,8 @@ def delete_subject(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"Error deleting subject: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to delete subject: {str(e)}"
+            detail="Failed to create exam."
         )
