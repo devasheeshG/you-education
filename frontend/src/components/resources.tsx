@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import UploadResourceModal from '../models/upload_resources';
 import { v4 as uuidv4 } from 'uuid';
 import TabsContainer from './tabs_container';
+import { motion } from 'framer-motion';
 
 // Resource type definition
 type Resource = {
@@ -156,48 +157,62 @@ export default function Resources() {
     switch (type) {
       case 'pdf':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-          </svg>
+          <div className="bg-red-900/30 p-1.5 rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+            </svg>
+          </div>
         );
       case 'txt':
       case 'md':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm8 8v2h1v-2h-1zm-2-6H7v2h6V7zm0 4H7v2h6v-2zm-6 4h6v2H7v-2z" clipRule="evenodd" />
-          </svg>
+          <div className="bg-zinc-700/50 p-1.5 rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm8 8v2h1v-2h-1zm-2-6H7v2h6V7zm0 4H7v2h6v-2zm-6 4h6v2H7v-2z" clipRule="evenodd" />
+            </svg>
+          </div>
         );
       case 'ppt':
       case 'pptx':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-          </svg>
+          <div className="bg-orange-900/30 p-1.5 rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+            </svg>
+          </div>
         );
       case 'doc':
       case 'docx':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-          </svg>
+          <div className="bg-blue-900/30 p-1.5 rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+            </svg>
+          </div>
         );
       case 'youtube':
         return (
-          <svg className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-          </svg>
+          <div className="bg-red-900/30 p-1.5 rounded-md">
+            <svg className="h-4 w-4 text-red-400" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </div>
         );
       case 'website':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973zM10 18a8 8 0 100-16 8 8 0 000 16z" clipRule="evenodd" />
-          </svg>
+          <div className="bg-purple-900/30 p-1.5 rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973zM10 18a8 8 0 100-16 8 8 0 000 16z" clipRule="evenodd" />
+            </svg>
+          </div>
         );
       default:
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-          </svg>
+          <div className="bg-zinc-700/50 p-1.5 rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+            </svg>
+          </div>
         );
     }
   };
@@ -207,33 +222,37 @@ export default function Resources() {
     return (
       <div className="p-4 h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-foreground px-3 py-2 rounded-md text-sm"
+            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-3 py-2 rounded-md text-sm transition-colors border border-zinc-700"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            Add
-          </button>
+            Add Resource
+          </motion.button>
         </div>
         
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
             </div>
           ) : resources.length > 0 ? (
             <div className="space-y-1">
               {resources.map(resource => (
-                <div 
+                <motion.div 
                   key={resource.id} 
-                  className={`flex items-center justify-between p-2 rounded-md hover:bg-secondary/50 cursor-pointer ${selectedResource?.id === resource.id ? 'bg-secondary' : ''}`}
+                  whileHover={{ scale: 1.01, borderColor: "rgb(165, 180, 252)" }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  className={`flex items-center justify-between p-3 rounded-md border ${selectedResource?.id === resource.id ? 'border-indigo-500 bg-zinc-800' : 'border-zinc-700 bg-zinc-800/50'} cursor-pointer group`}
                   onClick={() => setSelectedResource(resource)}
                 >
                   <div className="flex items-center gap-3">
                     {getResourceIcon(resource.type)}
-                    <span className="text-sm truncate max-w-[180px]">{resource.name}</span>
+                    <span className="text-sm truncate max-w-[180px] text-zinc-100">{resource.name}</span>
                   </div>
                   
                   <button 
@@ -241,53 +260,57 @@ export default function Resources() {
                       e.stopPropagation();
                       handleDeleteResource(resource.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-destructive"
+                    className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-zinc-400 hover:text-red-400 transition-colors"
                     title="Delete reference"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </button>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-40 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-muted-foreground mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-zinc-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
-              <p className="text-sm text-muted-foreground">No references yet</p>
-              <button 
+              <p className="text-sm text-zinc-400">No references yet</p>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setShowUploadModal(true)}
-                className="mt-4 text-sm text-primary hover:underline"
+                className="mt-4 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-md hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-900/30"
               >
                 Add your first reference
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
         
         {selectedResource && (
-          <div className="mt-4 border-t border-border pt-4">
+          <div className="mt-4 border-t border-zinc-700 pt-4">
             <div className="flex justify-between items-start">
-              <h3 className="font-medium">{selectedResource.name}</h3>
-              <span className="text-xs text-muted-foreground">{selectedResource.dateAdded}</span>
+              <h3 className="font-medium text-zinc-100">{selectedResource.name}</h3>
+              <span className="text-xs text-zinc-400">{selectedResource.dateAdded}</span>
             </div>
             {selectedResource.description && (
-              <p className="mt-2 text-sm text-muted-foreground">{selectedResource.description}</p>
+              <p className="mt-2 text-sm text-zinc-400">{selectedResource.description}</p>
             )}
             <div className="mt-3 flex items-center gap-3">
-              <a 
+              <motion.a 
+                whileHover={{ scale: 1.05 }}
                 href={selectedResource.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline flex items-center gap-1"
+                className="text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1 rounded-md hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-900/30"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                  <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                 </svg>
-                View
-              </a>
+                View Resource
+              </motion.a>
             </div>
           </div>
         )}
@@ -295,17 +318,8 @@ export default function Resources() {
     );
   };
 
-  
-
   return (
     <div className="h-full">
-      {/* <TabsContainer defaultActive="References">
-        {{
-          Mindmap: <MindmapContent />,
-          Chat: <ChatContent />,
-          References: 
-        }}
-      </TabsContainer> */}
       <ReferencesContent />
       
       {/* Upload Modal */}
