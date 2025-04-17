@@ -3,9 +3,6 @@ services:
     image: you-education-backend:latest
     container_name: you-education-backend-init-postgres-migration
     command: sh -c "poetry run alembic upgrade head"
-    depends_on:
-      you-education-backend-image:
-        condition: service_completed_successfully
     volumes:
       - ./backend:/app
     networks:
@@ -15,9 +12,6 @@ services:
     image: you-education-backend:latest
     container_name: you-education-backend-init-mongodb-migration
     command: python -m init.mongodb_migrations
-    depends_on:
-      you-education-backend-image:
-        condition: service_completed_successfully
     volumes:
       - ./backend:/app
     networks:
@@ -27,9 +21,6 @@ services:
     image: you-education-backend:latest
     container_name: you-education-backend-init-milvus-migration
     command: python -m init.milvus_migrations
-    depends_on:
-      you-education-backend-image:
-        condition: service_completed_successfully
     volumes:
       - ./backend:/app
     networks:
