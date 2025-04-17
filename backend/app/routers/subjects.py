@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.utils.postgres import Subject, get_db
 from app.utils.models import (
+    SubjectItem,
     SubjectCreateRequest,
     SubjectCreateResponse,
     ListSubjectResponse,
@@ -63,7 +64,11 @@ def create_subject(
         db.commit()
         db.refresh(subject)
         
-        return subject
+        return SubjectCreateResponse(
+            id=subject.id,
+            name=subject.name,
+            color=subject.color,
+        )
 
     except HTTPException:
         # Re-raise HTTP exceptions so they maintain their status codes
@@ -99,7 +104,16 @@ def list_subjects(
             .all()
         )
         
-        return ListSubjectResponse(subjects=subjects)
+        subject_items = [
+            SubjectItem(
+                id=subject.id,
+                name=subject.name,
+                color=subject.color,
+            )
+            for subject in subjects
+        ]
+        
+        return ListSubjectResponse(subjects=subject_items)
     
     except Exception as e:
         logger.error(f"Error listing subjects: {str(e)}")
@@ -162,7 +176,11 @@ def update_subject(
         db.commit()
         db.refresh(subject)
         
-        return subject
+        return UpdateSubjectResponse(
+            id=subject.id,
+            name=subject.name,
+            color=subject.color,
+        )
 
     except HTTPException:
         # Re-raise HTTP exceptions so they maintain their status codes
@@ -211,11 +229,11 @@ def delete_subject(
         db.commit()
         
         return None
-
+        
     except HTTPException:
         # Re-raise HTTP exceptions so they maintain their status codes
         raise
-
+        
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting subject: {str(e)}")

@@ -91,7 +91,14 @@ def create_exam(
             .first()
         )
 
-        return exam
+        return ExamCreateResponse(
+            id=exam.id,
+            name=exam.name,
+            description=exam.description,
+            exam_datetime=exam.exam_datetime,
+            total_hours_to_dedicate=exam.total_hours_to_dedicate,
+            subject=exam.subject
+        )
 
     except HTTPException:
         # Re-raise HTTP exceptions so they maintain their status codes
@@ -248,7 +255,14 @@ def update_exam(
         # Ensure subject is loaded after refresh if it was changed
         db.refresh(exam, attribute_names=['subject'])
 
-        return exam
+        return UpdateExamResponse(
+            id=exam.id,
+            name=exam.name,
+            description=exam.description,
+            exam_datetime=exam.exam_datetime,
+            total_hours_to_dedicate=exam.total_hours_to_dedicate,
+            subject=exam.subject
+        )
 
     except HTTPException:
         # Re-raise HTTP exceptions

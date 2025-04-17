@@ -2,6 +2,7 @@
 # Description: Import and export all models
 
 from .subjects import (
+    SubjectItem,
     SubjectCreateRequest,
     SubjectCreateResponse,
     ListSubjectResponse,
@@ -28,6 +29,7 @@ from .references import (
 
 __all__ = [
     # Subjects
+    "SubjectItem",
     "SubjectCreateRequest",
     "SubjectCreateResponse",
     "ListSubjectResponse",
