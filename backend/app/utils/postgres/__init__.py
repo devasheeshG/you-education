@@ -1,5 +1,5 @@
 from .base import get_db, DatabaseBase
-from .schema import Subject, Exam, Reference
+from .schema import Subject, Exam, Reference, Chunks
 
 __all__ = [
     # Base
@@ -10,4 +10,5 @@ __all__ = [
     "Subject",
     "Exam",
     "Reference",
+    "Chunks",
 ]

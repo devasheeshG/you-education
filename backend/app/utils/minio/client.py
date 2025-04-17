@@ -32,7 +32,7 @@ class MinioClient:
                 self.client.make_bucket(self.bucket_name)
                 logger.info(f"Created bucket: {self.bucket_name}")
         except S3Error as e:
-            logger.error(f"Error ensuring bucket exists: {e}")
+            logger.error(f"Error ensuring bucket exists: {str(e)}")
             raise
     
     def upload_file(self, file_data: BytesIO, object_name: str, content_type: str) -> None:
@@ -47,7 +47,7 @@ class MinioClient:
                 content_type=content_type
             )
         except S3Error as e:
-            logger.error(f"Error uploading file to MinIO: {e}")
+            logger.error(f"Error uploading file to MinIO: {str(e)}")
             raise
     
     def get_download_url(self, object_name: str) -> str:
@@ -60,7 +60,7 @@ class MinioClient:
                 expires=timedelta(minutes=5)  # URL valid for 5 minutes
             )
         except S3Error as e:
-            logger.error(f"Error generating download URL: {e}")
+            logger.error(f"Error generating download URL: {str(e)}")
             raise
     
     def delete_file(self, object_name) -> None:
@@ -68,7 +68,7 @@ class MinioClient:
         try:
             self.client.remove_object(self.bucket_name, object_name)
         except S3Error as e:
-            logger.error(f"Error deleting file from MinIO: {e}")
+            logger.error(f"Error deleting file from MinIO: {str(e)}")
             raise
 
     def file_exists(self, object_name: str) -> bool:
@@ -80,7 +80,7 @@ class MinioClient:
             if e.code == 'NoSuchKey':
                 return False
             else:
-                logger.error(f"Error checking file existence: {e}")
+                logger.error(f"Error checking file existence: {str(e)}")
                 raise
 
 @lru_cache

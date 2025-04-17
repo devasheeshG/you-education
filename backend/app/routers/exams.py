@@ -93,17 +93,20 @@ def create_exam(
             .first()
         )
 
+        # Create proper Pydantic models from SQLAlchemy models
+        subject_item = SubjectItem(
+            id=exam.subject.id,
+            name=exam.subject.name,
+            color=exam.subject.color
+        )
+
         return ExamCreateResponse(
             id=exam.id,
             name=exam.name,
             description=exam.description,
             exam_datetime=exam.exam_datetime,
             total_hours_to_dedicate=exam.total_hours_to_dedicate,
-            subject=SubjectItem(
-                id=exam.subject.id,
-                name=exam.subject.name,
-                color=exam.subject.color
-            )
+            subject=subject_item
         )
 
     except HTTPException:
@@ -146,60 +149,39 @@ def list_exams(
         )
 
         now = datetime.now(timezone.utc)
-        upcoming_exams = []
-        previous_exams = []
+        upcoming_exam_items = []
+        previous_exam_items = []
 
         for exam in exams:
             # Ensure exam_datetime is timezone-aware for comparison
             exam_dt_aware = exam.exam_datetime
-            # if exam_dt_aware.tzinfo is None:
-            #     # Assuming UTC if no timezone info (adjust if DB stores differently)
-            #     exam_dt_aware = exam_dt_aware.replace(tzinfo=timezone.utc)
             
+            # Create ExamItem from the SQLAlchemy model
+            exam_item = ExamItem(
+                id=exam.id,
+                name=exam.name,
+                description=exam.description,
+                exam_datetime=exam.exam_datetime,
+                total_hours_to_dedicate=exam.total_hours_to_dedicate,
+                subject=SubjectItem(
+                    id=exam.subject.id,
+                    name=exam.subject.name,
+                    color=exam.subject.color
+                )
+            )
+            
+            # Categorize based on date
             if exam_dt_aware >= now:
-                upcoming_exams.append(exam)
+                upcoming_exam_items.append(exam_item)
             else:
-                previous_exams.append(exam)
+                previous_exam_items.append(exam_item)
 
         # Sort exams by date
-        upcoming_exams.sort(key=lambda x: x.exam_datetime)
-        previous_exams.sort(key=lambda x: x.exam_datetime, reverse=True)
-
-        # Convert SQLAlchemy models to Pydantic models
-        upcoming_exam_items = [
-            ExamItem(
-                id=exam.id,
-                name=exam.name,
-                description=exam.description,
-                exam_datetime=exam.exam_datetime,
-                total_hours_to_dedicate=exam.total_hours_to_dedicate,
-                subject=SubjectItem(
-                    id=exam.subject.id,
-                    name=exam.subject.name,
-                    color=exam.subject.color
-                )
-            )
-            for exam in upcoming_exams
-        ]
-
-        previous_exam_items = [
-            ExamItem(
-                id=exam.id,
-                name=exam.name,
-                description=exam.description,
-                exam_datetime=exam.exam_datetime,
-                total_hours_to_dedicate=exam.total_hours_to_dedicate,
-                subject=SubjectItem(
-                    id=exam.subject.id,
-                    name=exam.subject.name,
-                    color=exam.subject.color
-                )
-            )
-            for exam in previous_exams
-        ]
+        upcoming_exam_items.sort(key=lambda x: x.exam_datetime)
+        previous_exam_items.sort(key=lambda x: x.exam_datetime, reverse=True)
 
         return ListExamResponse(
-            upcomming_exams=upcoming_exam_items,
+            upcoming_exams=upcoming_exam_items,
             previous_exams=previous_exam_items
         )
 
@@ -294,17 +276,20 @@ def update_exam(
         # Ensure subject is loaded after refresh if it was changed
         db.refresh(exam, attribute_names=['subject'])
 
+        # Create proper Pydantic models from SQLAlchemy models
+        subject_item = SubjectItem(
+            id=exam.subject.id,
+            name=exam.subject.name,
+            color=exam.subject.color
+        )
+
         return UpdateExamResponse(
             id=exam.id,
             name=exam.name,
             description=exam.description,
             exam_datetime=exam.exam_datetime,
             total_hours_to_dedicate=exam.total_hours_to_dedicate,
-            subject=SubjectItem(
-                id=exam.subject.id,
-                name=exam.subject.name,
-                color=exam.subject.color
-            )
+            subject=subject_item
         )
 
     except HTTPException:
