@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Optional, List
 from .subjects import SubjectItem
 
+class ExamItem(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str]
+    exam_datetime: datetime
+    total_hours_to_dedicate: float
+    subject: SubjectItem
+
 # Create Exam
 class ExamCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Name of the exam")
@@ -16,24 +24,18 @@ class ExamCreateRequest(BaseModel):
     total_hours_to_dedicate: float = Field(..., ge=1, le=50, description="Total hours to dedicate to studying")
 
 class ExamCreateResponse(BaseModel):
-    id: uuid.UUID
-    name: str
-    description: Optional[str]
-    exam_datetime: datetime
-    total_hours_to_dedicate: float
-    subject: SubjectItem
+    exam: ExamItem
+
+# Get Exam
+# class GetExamRequest(BaseModel):
+#     pass
+
+class GetExamResponse(BaseModel):
+    exam: ExamItem
 
 # List Exam
 # class ListExamRequest(BaseModel):
 #     pass
-
-class ExamItem(BaseModel):
-    id: uuid.UUID
-    name: str
-    description: Optional[str]
-    exam_datetime: datetime
-    total_hours_to_dedicate: float
-    subject: SubjectItem
 
 class ListExamResponse(BaseModel):
     upcoming_exams: List[ExamItem]
