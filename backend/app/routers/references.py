@@ -521,6 +521,28 @@ def delete_reference(
                 detail="Reference not found"
             )
         
+        # Get all chunks associated with this reference
+        chunks = (
+            db.query(Chunks)
+            .filter(Chunks.reference_id == reference_id)
+            .all()
+        )
+        
+        # Delete chunks from MongoDB and Milvus
+        for chunk in chunks:
+            try:
+                # Delete from MongoDB
+                mongodb_client.delete_chunk(chunk.id)
+                
+                # Delete from Milvus
+                milvus_client.delete_vector(chunk.id)
+            except Exception as e:
+                logger.error(f"Error deleting chunk {chunk.id} from MongoDB/Milvus: {str(e)}")
+                raise
+        
+        # Delete chunks from PostgreSQL
+        db.query(Chunks).filter(Chunks.reference_id == reference_id).delete()
+        
         # Delete from storage if it's a file-based reference
         if reference.file_type not in [ReferencesTypeEnum.WEBSITE_URL, ReferencesTypeEnum.YT_VIDEO_URL]:
             object_name = f"{exam_id}/{reference.file_name}"
@@ -534,8 +556,6 @@ def delete_reference(
         # Delete the reference from the database
         db.delete(reference)
         db.commit()
-        
-        return None
     
     except HTTPException:
         # Re-raise HTTP exceptions

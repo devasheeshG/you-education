@@ -1,6 +1,6 @@
 from .client import MilvusClient, get_milvus_client
 
-_all__ = [
+__all__ = [
     "MilvusClient",
     "get_milvus_client",
 ]

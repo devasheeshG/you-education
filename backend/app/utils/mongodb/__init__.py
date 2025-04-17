@@ -1,3 +1,3 @@
-from .client import MongoClient, get_mongodb_client
+from .client import MongoDBClient, get_mongodb_client
 
-__all__ = ["MongoClient", "get_mongodb_client"]
+__all__ = ["MongoDBClient", "get_mongodb_client"]
