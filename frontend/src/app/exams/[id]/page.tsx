@@ -26,6 +26,8 @@ const ExamPage = () => {
   const examId = params.id as string;
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showVideo, setShowVideo] = useState(false);
+  const [selectedLeaf, setSelectedLeaf] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchExamData = async () => {
@@ -35,7 +37,7 @@ const ExamPage = () => {
           id: examId,
           title: 'Computer Networking Concepts Explained',
           description: 'Learn the fundamental concepts of computer networking in this comprehensive lecture.',
-          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          youtubeUrl: 'https://youtu.be/dVlC9Uz7E08?si=0TBm4StcDftX4GH8',
           videoData: {
             title: 'Computer Networking Concepts Explained',
             description: 'This comprehensive lecture covers all major networking concepts including protocols, routing, and network architecture. Perfect for beginners and intermediate learners looking to understand how the internet works, data transmission principles, and network security fundamentals.',
@@ -63,6 +65,11 @@ const ExamPage = () => {
 
     fetchExamData();
   }, [examId]);
+
+  const handleLeafClick = (topic: string) => {
+    setSelectedLeaf(topic);
+    setShowVideo(true);
+  };
 
   if (loading) {
     return (
@@ -102,44 +109,44 @@ const ExamPage = () => {
   const hasYouTubeVideo = !!examData.youtubeUrl;
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-zinc-100 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        <motion.header 
-          className="mb-8"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <motion.div 
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="bg-indigo-900/30 p-2 rounded-xl"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-              </svg>
-            </motion.div>
-            <div>
-              <h1 className="text-2xl font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{examData.title}</h1>
-              <p className="text-sm text-zinc-400">Computer Science • Network Fundamentals</p>
-            </div>
-          </div>
-        </motion.header>
-
-        {/* Main content area */}
-        <div className="flex flex-col lg:flex-row w-full gap-6">
-          {/* Left content - video player and description */}
+    <div className="h-screen bg-zinc-900 text-zinc-100 flex flex-col">
+      <motion.header 
+        className="mb-4"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex items-center gap-2 mb-2">
           <motion.div 
-            className="w-full lg:w-3/5"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-indigo-900/30 p-2 rounded-xl"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 a1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+            </svg>
+          </motion.div>
+          <div>
+            <h1 className="text-2xl font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{examData.title}</h1>
+            <p className="text-sm text-zinc-400">Computer Science • Network Fundamentals</p>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col lg:flex-row w-full gap-1 overflow-hidden">
+        {/* Conditionally show video panel */}
+        {showVideo && (
+          <motion.div 
+            className="min-w-0 flex-none w-full lg:w-[35%] flex flex-col h-full overflow-auto custom-scroll"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {/* Video Player */}
             <motion.div 
-              className="border border-zinc-700 rounded-xl p-4 mb-4 bg-zinc-800/50 shadow-lg backdrop-blur-sm h-[400px]"
+              className="border border-zinc-700 rounded-xl p-2 mb-2 bg-zinc-800/50 shadow-lg backdrop-blur-sm h-[400px]"
               whileHover={{ borderColor: "rgb(129, 140, 248)" }}
               transition={{ duration: 0.3 }}
             >
@@ -156,7 +163,7 @@ const ExamPage = () => {
 
             {/* Video Description */}
             <motion.div
-              className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm p-4"
+              className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm p-2"
               whileHover={{ borderColor: "rgb(129, 140, 248)" }}
               transition={{ duration: 0.3 }}
             >
@@ -166,49 +173,28 @@ const ExamPage = () => {
               />
             </motion.div>
           </motion.div>
+        )}
 
-          {/* Right content - fixed width tabs panel */}
-          <motion.div 
-            className="w-full lg:w-2/5"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <motion.div 
-              className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm h-full min-h-[600px]"
-              whileHover={{ borderColor: "rgb(165, 180, 252)" }}
-              transition={{ duration: 0.3 }}
-            >
-              <TabsContainerStyled defaultActive="Mindmap">
-                {{
-                  Mindmap: <div className="h-full"><MindmapPage /></div>,
-                  Chat: <div className="h-full"><Chat /></div>,
-                  References: <div className="h-full"><References /></div>
-                }}
-              </TabsContainerStyled>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* Footer area with controls */}
-        <motion.footer 
-          className="mt-8 flex justify-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
+        {/* Tabs panel occupies remaining width */}
+        <motion.div 
+          className={`min-w-0 flex-1 w-full ${showVideo ? 'lg:w-[65%]' : ''} flex flex-col h-full overflow-auto`}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <motion.button 
-            className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <motion.div 
+            className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm flex-1 overflow-auto"
+            whileHover={{ borderColor: "rgb(165, 180, 252)" }}
+            transition={{ duration: 0.3 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            Continue with Next Topic
-          </motion.button>
-        </motion.footer>
+            <TabsContainerStyled defaultActive="Mindmap">
+              {{ Mindmap: <div className="h-full"><MindmapPage onLeafClick={handleLeafClick} /></div>, Chat: <div className="h-full"><Chat /></div>, References: <div className="h-full"><References /></div> }}
+            </TabsContainerStyled>
+          </motion.div>
+        </motion.div>
       </div>
+
+      
     </div>
   );
 };
@@ -273,35 +259,23 @@ function TabsContainerStyled({ defaultActive, children }: { defaultActive: strin
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === tab 
-              ? 'text-indigo-300' 
-              : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
+            className={`px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === tab ? 'text-indigo-300' : 'text-zinc-400 hover:text-zinc-200'
+            }`}>
             {tab}
-            {activeTab === tab && (
-              <motion.div 
-                layoutId="activeTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-400" 
-              />
-            )}
           </button>
         ))}
       </div>
-      <div className="p-4 flex-grow overflow-y-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="h-full"
-          >
-            {children[activeTab]}
-          </motion.div>
-        </AnimatePresence>
+      <div className="relative p-4 flex-grow overflow-auto h-full">
+        {tabs.map(tab => (
+          <div
+            key={tab}
+            className={`h-full w-full absolute inset-0 transition-opacity duration-300 ${
+              activeTab === tab ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}>
+            {children[tab]}
+          </div>
+        ))}
       </div>
     </div>
   );
