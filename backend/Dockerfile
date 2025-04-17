@@ -1,19 +1,34 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# Build stage
+FROM python:3.11-slim AS builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Set environment variables for efficiency
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry
 
 # Set work directory
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry
+# Copy only dependencies files
+COPY pyproject.toml poetry.lock* ./
 
-# Copy only requirements to cache them in docker layer
-COPY pyproject.toml poetry.lock* /app/
+# Generate requirements file for better caching
+RUN poetry export -f requirements.txt > requirements.txt
 
-# Project initialization:
-    RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+# Runtime stage
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install dependencies from the builder stage
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code last (for better layer caching)
+COPY . .
