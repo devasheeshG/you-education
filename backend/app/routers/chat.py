@@ -108,40 +108,60 @@ def chat_with_references(
             )
         
         # Get relevant chunks using Milvus similarity search
-        query_embedding = oai_client.embeddings.create(
-            input=request.message,
-            model=settings.EMBEDDINGS_MODEL_NAME,
-        )
-        query_vector = query_embedding.data[0].embedding
+        # query_embedding = oai_client.embeddings.create(
+        #     input=request.message,
+        #     model=settings.EMBEDDINGS_MODEL_NAME,
+        # ).data[0].embedding
         
         # Search for top 10 most relevant chunks
-        top_chunks = milvus_client.search_vector(
-            query_vector=query_vector,
-            reference_ids=[str(ref.id) for ref in references],
-            limit=5,
-            threshold=0.4,
-        )
-        if not top_chunks:
-            logger.warning("No relevant chunks found.")
+        # top_chunks = milvus_client.search_vector(
+        #     query_vector=query_embedding,
+        #     reference_ids=[str(ref.id) for ref in references],
+        #     limit=5,
+        #     threshold=0.4,
+        # )
+        # if not top_chunks:
+        #     logger.warning("No relevant chunks found.")
         
         # Create context from relevant chunks
+        # context_parts = []
+        # for result in top_chunks:
+        #     chunk_id = result.entity.id
+        #     # Get reference info
+        #     chunk = db.query(Chunks).filter(Chunks.id == chunk_id).first()
+        #     reference = db.query(Reference).filter(Reference.id == chunk.reference_id).first()
+        
+        #     # Get chunk content from MongoDB
+        #     mongo_chunk = mongodb_client.get_chunk(chunk_id)
+        
+        #     # Format context part
+        #     context_part = (
+        #         f"Reference Type: {reference.file_type}\n"
+        #         f"Reference Name: {reference.file_name}\n"
+        #         f"Reference Content:\n{mongo_chunk.content}\n\n\n"
+        #     )
+        #     context_parts.append(context_part)
+        
+        # FIXME: For now, just get all chunks of all references given by user
         context_parts = []
-        for result in top_chunks:
-            chunk_id = result.entity.id
+        for ref in references:
             # Get reference info
-            chunk = db.query(Chunks).filter(Chunks.id == chunk_id).first()
-            reference = db.query(Reference).filter(Reference.id == chunk.reference_id).first()
+            reference = db.query(Reference).filter(Reference.id == ref.id).first()
+            
+            # Get all chunks for this reference
+            chunks = db.query(Chunks).filter(Chunks.reference_id == reference.id).all()
             
             # Get chunk content from MongoDB
-            mongo_chunk = mongodb_client.get_chunk(chunk_id)
-            
-            # Format context part
-            context_part = (
-                f"Reference Type: {reference.file_type}\n"
-                f"Reference Name: {reference.file_name}\n"
-                f"Reference Content: \n{mongo_chunk.content}\n\n\n"
-            )
-            context_parts.append(context_part)
+            for chunk in chunks:
+                mongo_chunk = mongodb_client.get_chunk(chunk.id)
+                
+                # Format context part
+                context_part = (
+                    f"Reference Type: {reference.file_type}\n"
+                    f"Reference Name: {reference.file_name}\n"
+                    f"Reference Content:\n{mongo_chunk.content}\n\n\n"
+                )
+                context_parts.append(context_part)
         
         # Join all context parts
         context = "".join(context_parts)
