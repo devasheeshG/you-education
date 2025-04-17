@@ -198,12 +198,12 @@ def upload_reference(
             embedding = oai_emb_client.embeddings.create(
                 input=chunk.page_content, 
                 model=settings.EMBEDDINGS_MODEL_NAME
-            )
+            ).data[0].embedding
             
             # Create Milvus record
             milvus_record = MilvusChunkRecord(
-                chunk_id=chunk_record.id,
-                reference_id=reference.id,
+                chunk_id=str(chunk_record.id),
+                reference_id=str(reference.id),
                 embedding=embedding,
             )
             milvus_client.insert_vector(milvus_record)
@@ -332,26 +332,29 @@ def create_reference(
             
             # Create MongoDB document
             mongodb_chunk = MongoDbChunkDocument(
-                chunk_id=chunk_record.id,
+                chunk_id=str(chunk_record.id),
                 content=chunk.page_content,
             )
             mongodb_client.insert_chunk(mongodb_chunk)
             logger.debug(f"Inserted chunk into MongoDB: {mongodb_chunk}")
 
             # Generate embedding
-            embedding = oai_emb_client.embeddings.create(chunk.page_content)
+            embedding = oai_emb_client.embeddings.create(
+                input=chunk.page_content,
+                model=settings.EMBEDDINGS_MODEL_NAME
+            ).data[0].embedding
             
             # Create Milvus record
             milvus_record = MilvusChunkRecord(
-                chunk_id=chunk_record.id,
-                reference_id=reference.id,
+                chunk_id=str(chunk_record.id),
+                reference_id=str(reference.id),
                 embedding=embedding,
             )
             milvus_client.insert_vector(milvus_record)
         
         return ReferenceCreateResponse(
             id=reference.id,
-            type=request.file_type,
+            type=request.type,
             name=request.url
         )
     
