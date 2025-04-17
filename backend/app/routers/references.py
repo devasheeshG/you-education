@@ -1,7 +1,7 @@
 # Path: app/routers/references.py
 # Description: This file contains the routers for the References API.
 
-import io, uuid, re
+import io, uuid, re, tempfile
 from openai import OpenAI
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Path, status
 from sqlalchemy.orm import Session
@@ -150,7 +150,10 @@ def upload_reference(
         # Load the document and parse it
         try:
             loader_class = LANGCHAIN_LOADERS_MAPPING[file_type]
-            loader: BaseLoader = loader_class(file.file)
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(file.file.read())
+                tmp.flush()
+                loader: BaseLoader = loader_class(tmp.name)
             documents = loader.load()
         except Exception as e:
             logger.error(f"Error parsing file: {str(e)}")
