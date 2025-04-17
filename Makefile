@@ -3,8 +3,11 @@ SERVICE_NAME = you-education
 .PHONY: all install enable start status logs stop disable clean deps start_dev_server deploy dev
 
 # ----------Production commands (Docker)----------
-build:
-	docker compose build
+build backend:
+	cd backend && docker build -t you-education-backend:latest . && cd ..
+
+build frontend:
+	cd frontend && docker build -t you-education-frontend:latest . && cd ..
 
 up:
 	docker compose up -d
