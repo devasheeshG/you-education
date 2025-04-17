@@ -1,8 +1,9 @@
+import uuid
 from pydantic import BaseModel
 from typing import List
 
 class MongoDbChunkDocument(BaseModel):
-    chunk_id: str
+    chunk_id: uuid.UUID
     content: str
 
 class MilvusChunkRecord(BaseModel):
