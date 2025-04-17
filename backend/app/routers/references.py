@@ -192,7 +192,10 @@ def upload_reference(
             logger.debug(f"Inserted chunk into MongoDB: {mongodb_chunk}")
 
             # Generate embedding
-            embedding = oai_emb_client.embeddings.create(chunk.page_content)
+            embedding = oai_emb_client.embeddings.create(
+                input=chunk.page_content, 
+                model=settings.EMBEDDINGS_MODEL_NAME
+            )
             
             # Create Milvus record
             milvus_record = MilvusChunkRecord(

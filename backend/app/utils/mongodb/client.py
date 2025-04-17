@@ -33,6 +33,24 @@ class MongoDBClient:
             logger.error(f"Error inserting chunk into MongoDB: {str(e)}")
             raise
     
+    def get_chunk(self, chunk_id: uuid.UUID) -> MongoDbChunkDocument:
+        """
+        Retrieve a document chunk from MongoDB.
+        
+        Args:
+            chunk_id: UUID of the reference
+            
+        Returns:
+            The document chunk
+        """
+        try:
+            logger.debug(f"Retrieving chunk from MongoDB with ID: {chunk_id}")
+            chunk_data = self.collection.find_one({"chunk_id": str(chunk_id)})
+            return MongoDbChunkDocument(**chunk_data)
+        except Exception as e:
+            logger.error(f"Error retrieving chunk from MongoDB: {str(e)}")
+            raise
+    
     def delete_chunk(self, chunk_id: uuid.UUID) -> None:
         """
         Delete a document chunk from MongoDB.

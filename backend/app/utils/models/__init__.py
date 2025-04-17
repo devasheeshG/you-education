@@ -33,6 +33,11 @@ from .internal import (
     MilvusChunkRecord,
 )
 
+from .chat import (
+    ChatMessage,
+    ChatRequest,
+)
+
 __all__ = [
     # Subjects
     "SubjectItem",
@@ -62,4 +67,8 @@ __all__ = [
     # Internal
     "MongoDbChunkDocument",
     "MilvusChunkRecord",
+    
+    # Chat
+    "ChatMessage",
+    "ChatRequest",
 ]
