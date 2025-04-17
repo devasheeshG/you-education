@@ -12,7 +12,9 @@ services:
       - personal_prod
   you-education-backend-init-mongodb-migration:
     image: you-education-backend:latest
-    build: .
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: you-education-backend-init-mongodb-migration
     command: python -m init.mongodb_migrations
     volumes:
