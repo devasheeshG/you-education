@@ -28,7 +28,7 @@ milvus_client = get_milvus_client()
 
 # Define the prompt template
 CHAT_PROMPT = """You are a helpful study assistant developed by You Education. 
-User has an upcoming exam {exam_name} of subject {subject_name} and wants to prepare for it.
+User has an upcoming exam for {exam_name} of subject {subject_name} and wants to prepare for it.
 You are given access to user notes and references related to the exam. User that information to answer their questions.
 If you don't know the answer based on this information, say so.
 
@@ -118,9 +118,11 @@ def chat_with_references(
         top_chunks = milvus_client.search_vector(
             query_vector=query_vector,
             reference_ids=[str(ref.id) for ref in references],
-            limit=10,
-            threshold=0.5,
+            limit=5,
+            threshold=0.4,
         )
+        if not top_chunks:
+            logger.warning("No relevant chunks found.")
         
         # Create context from relevant chunks
         context_parts = []
@@ -128,13 +130,8 @@ def chat_with_references(
             chunk_id = result.entity.id
             # Get reference info
             chunk = db.query(Chunks).filter(Chunks.id == chunk_id).first()
-            if not chunk:
-                continue
-                
             reference = db.query(Reference).filter(Reference.id == chunk.reference_id).first()
-            if not reference:
-                continue
-                
+            
             # Get chunk content from MongoDB
             mongo_chunk = mongodb_client.get_chunk(chunk_id)
             

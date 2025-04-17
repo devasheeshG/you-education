@@ -41,8 +41,8 @@ class MilvusClient:
         self, 
         query_vector: list[float], 
         reference_ids: list[str], 
-        limit: int = 5, 
-        threshold: float = 0.5
+        limit: int, 
+        threshold: float
     ) -> list:
         """
         Search for similar vectors in Milvus.
