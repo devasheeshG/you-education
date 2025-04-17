@@ -19,7 +19,7 @@ interface Exam {
 }
 
 interface ExamsResponse {
-  upcomming_exams: Exam[];
+  upcoming_exams: Exam[];
   previous_exams: Exam[];
 }
 
@@ -38,6 +38,7 @@ function LandingPage() {
   const [pastExams, setPastExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchExams = async () => {
@@ -50,7 +51,7 @@ function LandingPage() {
         }
         
         const data: ExamsResponse = await response.json();
-        setUpcomingExams(data.upcomming_exams || []);
+        setUpcomingExams(data.upcoming_exams || []);
         setPastExams(data.previous_exams || []);
       } catch (err) {
         console.error('Error fetching exams:', err);
@@ -65,6 +66,8 @@ function LandingPage() {
 
   const handleCreateExam = async (examData: ExamData) => {
     try {
+      setLoading(true); // Add loading state while creating exam
+      
       const response = await fetch('/api/proxy/exams', {
         method: 'POST',
         headers: {
@@ -77,18 +80,35 @@ function LandingPage() {
         throw new Error('Failed to create exam');
       }
       
-      const newExam = await response.json();
+      // Close the modal first
+      setShowExamCreation(false);
       
-      // Refresh the exams list
+      // Show success message
+      setSuccessMessage('Exam created successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      
+      // Then refresh the exams list
       const examsResponse = await fetch('/api/proxy/exams');
+      if (!examsResponse.ok) {
+        throw new Error('Failed to refresh exams');
+      }
+      
       const data: ExamsResponse = await examsResponse.json();
-      setUpcomingExams(data.upcomming_exams || []);
+      setUpcomingExams(data.upcoming_exams || []);
       setPastExams(data.previous_exams || []);
       
-      setShowExamCreation(false);
+      // Show success message (you could implement a toast notification here)
+      console.log('Exam created successfully!');
     } catch (err) {
       console.error('Error creating exam:', err);
       // You could add error handling UI here
+      setError('Failed to create exam. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,6 +208,23 @@ function LandingPage() {
               Retry
             </button>
           </div>
+        )}
+
+        {/* Success message */}
+        {successMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 bg-emerald-900/80 border border-emerald-700 text-emerald-200 px-4 py-3 rounded-lg shadow-lg z-50"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"></path>
+              </svg>
+              <p>{successMessage}</p>
+            </div>
+          </motion.div>
         )}
 
         {!loading && !error && (
