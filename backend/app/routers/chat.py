@@ -167,6 +167,7 @@ def chat_with_references(
         
         # Add the current user message
         messages.append({"role": "user", "content": request.message})
+        logger.info(f"Chat messages: {messages}")
         
         # Stream the response
         return StreamingResponse(
