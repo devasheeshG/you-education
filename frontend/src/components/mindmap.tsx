@@ -4,12 +4,14 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Transformer } from 'markmap-lib';
 import { Markmap } from 'markmap-view';
 import { INode } from 'markmap-common';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { log } from 'node:console';
 
 // Create a custom type that makes children optional
 type MindMapNode = {
   content: string;
   children?: MindMapNode[];
+  isLeaf?: boolean; // Add this to track leaf nodes
 };
 
 // Dummy data for the mindmap - structured as an exam with topics and subtopics
@@ -19,13 +21,13 @@ const examData: MindMapNode = {
     {
       content: 'Cell Biology',
       children: [
-        { content: 'Cell Structure' },
-        { content: 'Cell Function' },
+        { content: 'Cell Structure', isLeaf: true },
+        { content: 'Cell Function', isLeaf: true },
         { 
           content: 'Cell Division', 
           children: [
-            { content: 'Mitosis' },
-            { content: 'Meiosis' }
+            { content: 'Mitosis', isLeaf: true },
+            { content: 'Meiosis', isLeaf: true }
           ] 
         }
       ]
@@ -33,17 +35,17 @@ const examData: MindMapNode = {
     {
       content: 'Genetics',
       children: [
-        { content: 'Inheritance' },
-        { content: 'DNA Structure' },
-        { content: 'Gene Expression' }
+        { content: 'Inheritance', isLeaf: true },
+        { content: 'DNA Structure', isLeaf: true },
+        { content: 'Gene Expression', isLeaf: true }
       ]
     },
     {
       content: 'Ecology',
       children: [
-        { content: 'Ecosystems' },
-        { content: 'Population Dynamics' },
-        { content: 'Environmental Impact' }
+        { content: 'Ecosystems', isLeaf: true },
+        { content: 'Population Dynamics', isLeaf: true },
+        { content: 'Environmental Impact', isLeaf: true }
       ]
     }
   ]
@@ -53,6 +55,11 @@ const examData: MindMapNode = {
 function childToMarkdown(node: MindMapNode, level: number): string {
   const heading = '#'.repeat(level);
   let markdown = `${heading} ${node.content}\n`;
+  
+  // Add a data attribute to identify leaf nodes in the Markdown
+  if (node.isLeaf) {
+    markdown = `${heading} ${node.content} <!-- isLeaf -->\n`;
+  }
   
   if (node.children && node.children.length > 0) {
     node.children.forEach(child => {
@@ -78,10 +85,10 @@ function examDataToMarkdown(node: MindMapNode): string {
 // Function to transform our custom data structure to the format required by markmap
 const transformer = new Transformer();
 
-export default function MindmapPage() {
+export default function MindmapPage({ onLeafClick }: { onLeafClick: (content: string) => void }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const markmapRef = useRef<Markmap | null>(null);
-  const [showTutorial, setShowTutorial] = useState(true);
+
   const [zoomLevel, setZoomLevel] = useState(1);
   const [is3DView, setIs3DView] = useState(false);
 
@@ -139,6 +146,21 @@ export default function MindmapPage() {
     
     markmapRef.current = mm;
     
+    // Add click event listener to the SVG element
+    const handleNodeClick = (event: MouseEvent) => {
+      const nodeG = (event.target as Element).closest('g.markmap-node') as SVGGElement;
+      if (!nodeG) return;
+      const nodeData = (nodeG as any).__data__ as INode;
+      const isLeaf = !nodeData.children || nodeData.children.length === 0;
+      if (isLeaf) {
+        event.stopPropagation();
+        handleReset();
+        onLeafClick(nodeData.content);
+      }
+    };
+    
+    svgRef.current.addEventListener('click', handleNodeClick);
+    
     // Handle window resize
     const handleResize = () => {
       if (markmapRef.current) {
@@ -149,6 +171,9 @@ export default function MindmapPage() {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (svgRef.current) {
+        svgRef.current.removeEventListener('click', handleNodeClick);
+      }
       if (markmapRef.current) {
         markmapRef.current.destroy();
       }
@@ -235,58 +260,13 @@ export default function MindmapPage() {
               <path d="M12 8v13"></path>
             </svg>
           </button>
-          <button 
-            onClick={() => setShowTutorial(true)}
-            className="p-2 rounded-md hover:bg-gradient-to-r hover:from-indigo-600 hover:to-purple-600 text-zinc-300 hover:text-white transition-colors"
-            aria-label="Show help"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-          </button>
         </div>
         
         {/* Short instruction text */}
         <div className="absolute top-4 left-4 z-20 bg-zinc-900/80 text-xs text-zinc-400 py-1 px-2 rounded border border-zinc-700 backdrop-blur-sm">
-          Click nodes to expand/collapse. Drag to move.
+          Click nodes to expand/collapse. Click leaf nodes for details. Drag to move.
         </div>
       </div>
-
-      {/* Tutorial overlay */}
-      <AnimatePresence>
-        {showTutorial && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/80 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 max-w-md w-full shadow-lg shadow-indigo-900/20"
-            >
-              <h3 className="text-xl font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-3">Mind Map Tutorial</h3>
-              <div className="space-y-3 text-zinc-300 text-sm">
-                <p><strong className="text-zinc-100">Navigation:</strong> Click and drag to move around the mind map.</p>
-                <p><strong className="text-zinc-100">Expand/Collapse:</strong> Click on any node to expand or collapse its children.</p>
-                <p><strong className="text-zinc-100">Zoom:</strong> Use the controls in the bottom right to zoom in or out.</p>
-                <p><strong className="text-zinc-100">3D View:</strong> Toggle the 3D perspective for a more immersive experience.</p>
-                <p><strong className="text-zinc-100">Reset:</strong> Click the reset button to fit the mind map to your screen.</p>
-              </div>
-              <button
-                onClick={() => setShowTutorial(false)}
-                className="mt-6 w-full py-2 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-colors shadow-lg shadow-indigo-900/30"
-              >
-                Got it
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
