@@ -17,8 +17,10 @@ from app.utils.models import (
     UpdateExamResponse,
 )
 from app.logger import get_logger
+from app.utils.mongodb import get_mongodb_client
 
 logger = get_logger()
+mongodb_client = get_mongodb_client()
 
 router = APIRouter(
     prefix="/exams",
@@ -392,6 +394,12 @@ def delete_exam(
 
         if not exam:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+
+        # Delete the generated mindmap from MongoDB
+        mongodb_client.delete_mindmap(exam_id)
+        
+        # TODO: delete references chunks from MongoDB
+        # TODO: delete vector records from milvus
 
         # Delete the exam
         db.delete(exam)

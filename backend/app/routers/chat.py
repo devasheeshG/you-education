@@ -41,8 +41,8 @@ reference materials where relevant.
 
 # Initialize OpenAI client for chat completions
 oai_llm_client = OpenAI(
-    api_key=settings.LLM_API_KEY,
-    base_url=settings.LLM_BASE_URL,
+    api_key=settings.CHAT_LLM_API_KEY,
+    base_url=settings.CHAT_LLM_BASE_URL,
 )
 
 # Initialize OpenAI client for embeddings
@@ -216,7 +216,7 @@ def stream_chat_response(messages: List[dict]) -> Iterator[str]:
     try:
         # Create streaming response from OpenAI
         response_stream = oai_client.chat.completions.create(
-            model=settings.LLM_MODEL_NAME,
+            model=settings.CHAT_LLM_MODEL_NAME,
             messages=messages,
             stream=True
         )
