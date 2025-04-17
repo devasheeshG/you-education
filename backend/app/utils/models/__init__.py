@@ -28,6 +28,11 @@ from .references import (
     DownloadReferenceResponse,
 )
 
+from .internal import (
+    MongoDbChunkDocument,
+    MilvusChunkRecord,
+)
+
 __all__ = [
     # Subjects
     "SubjectItem",
@@ -53,4 +58,8 @@ __all__ = [
     "ReferenceItem",
     "ListReferenceResponse",
     "DownloadReferenceResponse",
+    
+    # Internal
+    "MongoDbChunkDocument",
+    "MilvusChunkRecord",
 ]

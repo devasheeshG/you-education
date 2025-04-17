@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from functools import lru_cache
 from app.config import get_settings
 from app.logger import get_logger
-from app.utils.models.internal import MongoDbChunkDocument
+from app.utils.models import MongoDbChunkDocument
 
 settings = get_settings()
 logger = get_logger()

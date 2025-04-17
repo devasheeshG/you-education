@@ -1,10 +1,9 @@
-from functools import lru_cache
 import uuid
-from typing import List, Tuple
-from pymilvus import connections, Collection, utility
+from functools import lru_cache
+from pymilvus import connections, Collection
 from app.config import get_settings
 from app.logger import get_logger
-from app.utils.models.internal import MilvusChunkRecord
+from app.utils.models import MilvusChunkRecord
 
 settings = get_settings()
 logger = get_logger()
@@ -24,92 +23,33 @@ class MilvusClient:
         self.collection.load()
         logger.info(f"Milvus client initialized for collection {settings.MILVUS_COLLECTION}")
     
-    def insert_vectors(self, records: List[MilvusChunkRecord]) -> bool:
+    def insert_vector(self, record: MilvusChunkRecord) -> None:
         """
-        Insert embedding vectors into Milvus.
+        Insert embedding vector into Milvus.
         
         Args:
-            records: List of MilvusChunkRecord objects containing chunk_id, reference_id and embedding
-            
-        Returns:
-            bool: True if insertion was successful
+            record: MilvusChunkRecord objects containing chunk_id, reference_id and embedding
         """
         try:
-            if not records:
-                return True
-                
-            # Format data for Milvus insertion
-            chunk_ids = [str(record.chunk_id) for record in records]
-            reference_ids = [str(record.reference_id) for record in records]
-            embeddings = [record.embedding for record in records]
-            
-            # Insert data
-            self.collection.insert([
-                chunk_ids,    # chunk_id field
-                reference_ids,  # reference_id field
-                embeddings    # embedding field
-            ])
-            logger.info(f"Inserted {len(records)} vectors into Milvus")
-            return True
+            logger.debug(f"Inserting vector into Milvus: {record}")
+            self.collection.insert(record.model_dump())
         except Exception as e:
             logger.error(f"Error inserting vectors into Milvus: {str(e)}")
-            return False
+            raise
     
-    def search_similar(self, query_embedding: List[float], top_k: int = 5) -> List[Tuple[str, float]]:
+    def delete_vector(self, chunk_id: uuid.UUID) -> None:
         """
-        Search for similar vectors in Milvus.
+        Delete embedding vector from Milvus.
         
         Args:
-            query_embedding: The embedding vector to search for
-            top_k: Number of results to return
-            
-        Returns:
-            List of tuples (chunk_id, similarity_score)
+            chunk_id: UUID of the reference
         """
         try:
-            search_params = {
-                "metric_type": "COSINE",
-                "params": {"nprobe": 10}  # You may want to adjust nprobe based on your index
-            }
-            
-            results = self.collection.search(
-                data=[query_embedding],
-                anns_field="embedding",
-                param=search_params,
-                limit=top_k,
-                output_fields=["reference_id"]
-            )
-            
-            # Format results
-            similar_chunks = []
-            for hits in results:
-                for hit in hits:
-                    chunk_id = hit.id
-                    score = hit.score
-                    similar_chunks.append((chunk_id, score))
-            
-            return similar_chunks
-        except Exception as e:
-            logger.error(f"Error searching in Milvus: {str(e)}")
-            return []
-    
-    def delete_by_reference(self, reference_id: uuid.UUID) -> bool:
-        """
-        Delete all vectors associated with a reference ID.
-        
-        Args:
-            reference_id: UUID of the reference
-            
-        Returns:
-            bool: True if deletion was successful
-        """
-        try:
-            expr = f'reference_id == "{str(reference_id)}"'
-            self.collection.delete(expr)
-            return True
+            logger.debug(f"Deleting vector from Milvus with ID: {chunk_id}")
+            self.collection.delete(f"chunk_id == '{str(chunk_id)}'")
         except Exception as e:
             logger.error(f"Error deleting vectors from Milvus: {str(e)}")
-            return False
+            raise
 
 @lru_cache
 def get_milvus_client() -> MilvusClient:

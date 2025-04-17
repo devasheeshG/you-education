@@ -23,9 +23,13 @@ from app.utils.models import (
     ReferenceUploadResponse,
     ReferenceItem,
     ListReferenceResponse,
-    DownloadReferenceResponse
+    DownloadReferenceResponse,
+    MongoDbChunkDocument,
+    MilvusChunkRecord,
 )
 from app.utils.minio.client import get_minio_client
+from app.utils.milvus import get_milvus_client
+from app.utils.mongodb import get_mongodb_client
 from app.logger import get_logger
 from app.config import get_settings
 
@@ -45,8 +49,10 @@ oai_emb_client = OpenAI(
 )
 
 # Initialize MongoDB client
+mongodb_client = get_mongodb_client()
 
 # Initialize Milvus client
+milvus_client = get_milvus_client()
 
 # Initialize FastAPI router
 router = APIRouter(
@@ -163,6 +169,37 @@ def upload_reference(
         db.add(reference)
         db.commit()
         db.refresh(reference)
+        
+        # Process each chunk
+        for i, chunk in enumerate(documents):
+            # Create postgres record
+            chunk_record = Chunks(
+                reference_id=reference.id,
+                chunk_number=i,
+                total_chunks=len(documents),
+            )
+            db.add(chunk_record)
+            db.commit()
+            db.refresh(chunk_record)
+            
+            # Create MongoDB document
+            mongodb_chunk = MongoDbChunkDocument(
+                chunk_id=chunk_record.id,
+                content=chunk.page_content,
+            )
+            mongodb_client.insert_chunk(mongodb_chunk)
+            logger.debug(f"Inserted chunk into MongoDB: {mongodb_chunk}")
+            
+            # Generate embedding
+            embedding = oai_emb_client.embeddings.create(chunk.page_content)
+            
+            # Create Milvus record
+            milvus_record = MilvusChunkRecord(
+                chunk_id=chunk_record.id,
+                reference_id=reference.id,
+                embedding=embedding,
+            )
+            milvus_client.insert_vector(milvus_record)
         
         # Upload to MinIO
         if CONTENT_TYPE_MAPPING[file_type]:
