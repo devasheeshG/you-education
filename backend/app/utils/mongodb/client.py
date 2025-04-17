@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from functools import lru_cache
 from app.config import get_settings
 from app.logger import get_logger
-from app.utils.models.internal import MongoDbChunkDocument
+from app.utils.models import MongoDbChunkDocument
 
 settings = get_settings()
 logger = get_logger()
@@ -31,6 +31,24 @@ class MongoDBClient:
             self.collection.insert_one(chunk.model_dump())
         except Exception as e:
             logger.error(f"Error inserting chunk into MongoDB: {str(e)}")
+            raise
+    
+    def get_chunk(self, chunk_id: uuid.UUID) -> MongoDbChunkDocument:
+        """
+        Retrieve a document chunk from MongoDB.
+        
+        Args:
+            chunk_id: UUID of the reference
+            
+        Returns:
+            The document chunk
+        """
+        try:
+            logger.debug(f"Retrieving chunk from MongoDB with ID: {chunk_id}")
+            chunk_data = self.collection.find_one({"chunk_id": str(chunk_id)})
+            return MongoDbChunkDocument(**chunk_data)
+        except Exception as e:
+            logger.error(f"Error retrieving chunk from MongoDB: {str(e)}")
             raise
     
     def delete_chunk(self, chunk_id: uuid.UUID) -> None:

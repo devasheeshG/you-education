@@ -1,7 +1,6 @@
 # Path: app/config.py
 # Description: This file contains code to load `.env` file and make a pydantic `BaseSettings` class which can be used to access environment variables in the application.
 
-from pydantic import HttpUrl
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -46,12 +45,12 @@ class Settings(BaseSettings):
     MILVUS_COLLECTION: str
 
     # LLM Configuration
-    LLM_BASE_URL: HttpUrl
+    LLM_BASE_URL: str
     LLM_API_KEY: str
     LLM_MODEL_NAME: str
     
     # Embeddings Configuration
-    EMBEDDINGS_BASE_URL: HttpUrl
+    EMBEDDINGS_BASE_URL: str
     EMBEDDINGS_API_KEY: str
     EMBEDDINGS_MODEL_NAME: str
     EMBEDDINGS_N_DIM: int
