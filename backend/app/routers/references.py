@@ -188,7 +188,7 @@ def upload_reference(
             
             # Create MongoDB document
             mongodb_chunk = MongoDbChunkDocument(
-                chunk_id=chunk_record.id,
+                chunk_id=str(chunk_record.id),
                 content=chunk.page_content,
             )
             mongodb_client.insert_chunk(mongodb_chunk)
