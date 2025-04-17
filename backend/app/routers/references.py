@@ -211,8 +211,11 @@ def upload_reference(
         # Upload to MinIO
         if CONTENT_TYPE_MAPPING[file_type]:
             try:
+                # Reset file position to the beginning
+                file.file.seek(0)
+                
                 minio_client.upload_file(
-                    file_data=io.BytesIO(file.read()),
+                    file_data=io.BytesIO(file.file.read()),
                     object_name=f"{exam_id}/{file.filename}",
                     content_type=CONTENT_TYPE_MAPPING[file_type],
                 )

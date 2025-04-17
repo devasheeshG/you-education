@@ -31,7 +31,7 @@ class MilvusClient:
             record: MilvusChunkRecord objects containing chunk_id, reference_id and embedding
         """
         try:
-            logger.debug(f"Inserting vector into Milvus: {record}")
+            logger.debug(f"Inserting vector into Milvus for chunk: {record.chunk_id}")
             self.collection.insert(record.model_dump())
         except Exception as e:
             logger.error(f"Error inserting vectors into Milvus: {str(e)}")
