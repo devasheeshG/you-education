@@ -36,7 +36,7 @@ class ExamItem(BaseModel):
     subject: SubjectItem
 
 class ListExamResponse(BaseModel):
-    upcomming_exams: List[ExamItem]
+    upcoming_exams: List[ExamItem]
     previous_exams: List[ExamItem]
 
 # Get Exam
