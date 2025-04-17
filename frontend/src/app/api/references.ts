@@ -3,6 +3,7 @@ export interface Reference {
   id: string;
   type: string;
   name: string;
+  url?: string; 
 }
 
 export interface ReferencesResponse {
