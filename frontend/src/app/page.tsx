@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from 'next/navigation';
 import ExamCreationModal, { ExamData } from "../models/create_exam";
 
 interface Subject {
@@ -32,6 +33,7 @@ export default function Home() {
 }
 
 function LandingPage() {
+  const router = useRouter();
   const [showExamCreation, setShowExamCreation] = useState(false);
   const [currentDate] = useState(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
   const [upcomingExams, setUpcomingExams] = useState<Exam[]>([]);
@@ -64,9 +66,14 @@ function LandingPage() {
     fetchExams();
   }, []);
 
+  // Function to navigate to exam detail page
+  const navigateToExam = (examId: string) => {
+    router.push(`/exams/${examId}`);
+  };
+
   const handleCreateExam = async (examData: ExamData) => {
     try {
-      setLoading(true); // Add loading state while creating exam
+      setLoading(true);
       
       const response = await fetch('/api/proxy/exams', {
         method: 'POST',
@@ -100,12 +107,8 @@ function LandingPage() {
       const data: ExamsResponse = await examsResponse.json();
       setUpcomingExams(data.upcoming_exams || []);
       setPastExams(data.previous_exams || []);
-      
-      // Show success message (you could implement a toast notification here)
-      console.log('Exam created successfully!');
     } catch (err) {
       console.error('Error creating exam:', err);
-      // You could add error handling UI here
       setError('Failed to create exam. Please try again.');
     } finally {
       setLoading(false);
@@ -296,16 +299,6 @@ function LandingPage() {
                   <h3 className="text-xs uppercase tracking-wider text-zinc-400 mb-1">Completed Exams</h3>
                   <p className="text-2xl font-medium text-indigo-300">{pastExams.length}</p>
                 </motion.div>
-                {/* <motion.div 
-                  whileHover={{ scale: 1.03 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-5 backdrop-blur-sm shadow-lg"
-                >
-                  <h3 className="text-xs uppercase tracking-wider text-zinc-400 mb-1">Average Score</h3>
-                  <p className="text-2xl font-medium text-emerald-400">
-                    {pastExams.length > 0 ? '88%' : 'N/A'}
-                  </p>
-                </motion.div> */}
                 <motion.div 
                   whileHover={{ scale: 1.03 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -380,7 +373,12 @@ function LandingPage() {
                             </svg>
                             <span>{formatDate(exam.exam_datetime)}</span>
                           </div>
-                          <button className="inline-flex items-center justify-center rounded-md bg-indigo-600/30 border border-indigo-500/30 px-3 py-1 text-xs font-medium text-indigo-300 shadow-sm hover:bg-indigo-600/50 transition-colors">Study Now</button>
+                          <button 
+                            onClick={() => navigateToExam(exam.id)}
+                            className="inline-flex items-center justify-center rounded-md bg-indigo-600/30 border border-indigo-500/30 px-3 py-1 text-xs font-medium text-indigo-300 shadow-sm hover:bg-indigo-600/50 transition-colors"
+                          >
+                            Study Now
+                          </button>
                         </div>
                       </motion.div>
                     );
@@ -456,7 +454,12 @@ function LandingPage() {
                           </svg>
                           <span>{formatDate(exam.exam_datetime)}</span>
                         </div>
-                        <button className="inline-flex items-center justify-center rounded-md bg-purple-600/30 border border-purple-500/30 px-3 py-1 text-xs font-medium text-purple-300 shadow-sm hover:bg-purple-600/50 transition-colors">Review</button>
+                        <button 
+                          onClick={() => navigateToExam(exam.id)}
+                          className="inline-flex items-center justify-center rounded-md bg-purple-600/30 border border-purple-500/30 px-3 py-1 text-xs font-medium text-purple-300 shadow-sm hover:bg-purple-600/50 transition-colors"
+                        >
+                          Review
+                        </button>
                       </div>
                     </motion.div>
                   ))}
