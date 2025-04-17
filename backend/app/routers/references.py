@@ -4,6 +4,15 @@
 import io, uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Path, status
 from sqlalchemy.orm import Session
+from langchain_community.document_loaders import (
+    TextLoader,
+    PyPDFLoader,
+    UnstructuredPowerPointLoader,
+    Docx2txtLoader,
+    UnstructuredMarkdownLoader,
+    YoutubeLoader,
+    UnstructuredURLLoader,
+)
 from app.utils.postgres import Reference, Exam, get_db
 from app.utils.models import (
     ReferencesTypeEnum,
