@@ -5,8 +5,11 @@
         "**/.hg": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
-        "**/node_modules": true,
-        "**/dist": true,
-        "**/build": true,
+        "node_modules": true,
+        "dist": true,
+        "build": true,
+        ".vscode": true,
+        ".next": true,
+        "package-lock.json": true,
     }
 }

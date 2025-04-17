@@ -140,9 +140,9 @@ def chat_with_references(
             
             # Format context part
             context_part = (
-                f"reference type: {reference.file_type}\n"
-                f"reference name: {reference.file_name}\n"
-                f"reference content: {mongo_chunk.content}\n\n\n"
+                f"Reference Type: {reference.file_type}\n"
+                f"Reference Name: {reference.file_name}\n"
+                f"Reference Content: \n{mongo_chunk.content}\n\n\n"
             )
             context_parts.append(context_part)
         
