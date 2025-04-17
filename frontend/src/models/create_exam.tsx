@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, FormEvent, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { getAllSubjects, Subject } from '@/app/api/subjects';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getAllSubjects, Subject, createSubject } from '@/app/api/subjects';
 
 interface ExamCreationProps {
   onClose: () => void;
@@ -31,9 +31,9 @@ export default function ExamCreationModal({ onClose, onCreate }: ExamCreationPro
   });
   
   // State for new subject creation
-  const [isAddingSubject, setIsAddingSubject] = useState(false);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
-  const [newSubjectColor, setNewSubjectColor] = useState("ffffff"); // Default white color
+  const [newSubjectColor, setNewSubjectColor] = useState("6366F1"); // Default indigo color
   const [isCreatingSubject, setIsCreatingSubject] = useState(false);
   const [subjectError, setSubjectError] = useState<string | null>(null);
 
@@ -63,15 +63,46 @@ export default function ExamCreationModal({ onClose, onCreate }: ExamCreationPro
   };
 
   const handleCreateSubject = async () => {
-    // Logic for subject creation
-    // This remains unchanged from your current implementation
+    if (!newSubjectName.trim()) {
+      setSubjectError('Subject name is required');
+      return;
+    }
+
+    try {
+      setIsCreatingSubject(true);
+      setSubjectError(null);
+      
+      const response = await createSubject({
+        name: newSubjectName,
+        color: newSubjectColor
+      });
+      
+      // Add the new subject to our list and select it
+      setSubjects(prev => [...prev, response]);
+      setExamData(prev => ({ ...prev, subject_id: response.id }));
+      
+      // Close the subject modal
+      setShowSubjectModal(false);
+      setNewSubjectName("");
+      
+    } catch (err) {
+      console.error('Error creating subject:', err);
+      setSubjectError('Failed to create subject. Please try again.');
+    } finally {
+      setIsCreatingSubject(false);
+    }
   };
 
   const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === "add_new") {
-      // If "Add new subject" is selected, switch to subject creation mode
-      setIsAddingSubject(true);
+      // If "Add new subject" is selected, open the subject modal
+      setShowSubjectModal(true);
+      
+      // Reset subject selection to previous value
+      if (subjects.length > 0 && !examData.subject_id) {
+        setExamData(prev => ({ ...prev, subject_id: subjects[0].id }));
+      }
     } else {
       setExamData(prev => ({ ...prev, subject_id: value }));
     }
@@ -128,6 +159,20 @@ export default function ExamCreationModal({ onClose, onCreate }: ExamCreationPro
     setNewSubjectColor(color);
   };
 
+  // Helper function to create color preview
+  const getColorPreview = (color: string) => {
+    return {
+      backgroundColor: `#${color}`,
+    };
+  };
+
+  // Cancel adding a new subject
+  const closeSubjectModal = () => {
+    setShowSubjectModal(false);
+    setNewSubjectName("");
+    setSubjectError(null);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
       <motion.div 
@@ -176,48 +221,37 @@ export default function ExamCreationModal({ onClose, onCreate }: ExamCreationPro
               />
             </div>
             
-            {/* Subject Dropdown or Add Subject Form */}
+            {/* Subject Dropdown */}
             <div>
               <label htmlFor="subject_id" className="block text-sm font-medium text-zinc-300 mb-1">
                 Select Subject
               </label>
-              
-              {!isAddingSubject ? (
-                // Subject Selection UI
-                <>
-                  <div className="relative">
-                    <select
-                      id="subject_id"
-                      name="subject_id"
-                      value={examData.subject_id}
-                      onChange={handleSubjectChange}
-                      className="appearance-none h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors pr-8"
-                      required
-                      disabled={isLoading}
-                    >
-                      <option value="" disabled>
-                        {isLoading ? 'Loading subjects...' : 'Choose a subject...'}
-                      </option>
-                      {subjects.map(subject => (
-                        <option key={subject.id} value={subject.id}>
-                          {subject.name}
-                        </option>
-                      ))}
-                      <option value="add_new">+ Add new subject</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400">
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                      </svg>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                // Add New Subject Form - logic for new subject creation
-                <div className="space-y-3 border border-zinc-700 rounded-lg p-3 bg-zinc-800/30">
-                  {/* Subject creation UI remains unchanged */}
+              <div className="relative">
+                <select
+                  id="subject_id"
+                  name="subject_id"
+                  value={examData.subject_id}
+                  onChange={handleSubjectChange}
+                  className="appearance-none h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors pr-8"
+                  required
+                  disabled={isLoading}
+                >
+                  <option value="" disabled>
+                    {isLoading ? 'Loading subjects...' : 'Choose a subject...'}
+                  </option>
+                  {subjects.map(subject => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
+                  ))}
+                  <option value="add_new">+ Add new subject</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
                 </div>
-              )}
+              </div>
             </div>
             
             {/* Description field */}
@@ -287,13 +321,120 @@ export default function ExamCreationModal({ onClose, onCreate }: ExamCreationPro
               whileTap={{ scale: 0.97 }}
               type="submit"
               className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
-              disabled={isLoading || isAddingSubject}
+              disabled={isLoading}
             >
               Create Exam
             </motion.button>
           </div>
         </form>
       </motion.div>
+
+      {/* Subject Creation Modal - Appears on top of Exam Creation Modal */}
+      <AnimatePresence>
+        {showSubjectModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={closeSubjectModal}>
+            <motion.div 
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl w-full max-w-sm p-6"
+              onClick={e => e.stopPropagation()} // Prevent closing when clicking inside
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Add New Subject</h2>
+                <button 
+                  onClick={closeSubjectModal}
+                  className="text-zinc-400 hover:text-zinc-200 transition-colors"
+                  aria-label="Close"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {subjectError && (
+                <div className="bg-red-900/30 border border-red-800 text-red-300 px-3 py-2 rounded-md mb-4 text-xs">
+                  {subjectError}
+                </div>
+              )}
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="newSubjectName" className="block text-sm font-medium text-zinc-300 mb-1">
+                    Subject Name
+                  </label>
+                  <input
+                    id="newSubjectName"
+                    type="text"
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    className="flex h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    placeholder="Enter subject name"
+                    required
+                    maxLength={50}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="newSubjectColor" className="block text-sm font-medium text-zinc-300 mb-1">
+                    Subject Color
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-grow">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span className="text-zinc-400">#</span>
+                      </div>
+                      <input
+                        id="newSubjectColor"
+                        type="text"
+                        value={newSubjectColor}
+                        onChange={(e) => setNewSubjectColor(e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '').substring(0, 6))}
+                        className="flex h-10 w-full rounded-lg border border-zinc-700 bg-zinc-800/50 pl-7 pr-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        placeholder="Color hex code without #"
+                        maxLength={6}
+                      />
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-lg flex-shrink-0 border border-zinc-700"
+                      style={getColorPreview(newSubjectColor)}
+                    ></div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={generateRandomColor}
+                  className="w-full py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-300 border border-zinc-700 transition-colors flex-shrink-0 mt-2"
+                >
+                  Generate Random Color
+                </button>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={closeSubjectModal}
+                  className="py-2 px-4 rounded-lg bg-zinc-800 text-sm text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  type="button"
+                  onClick={handleCreateSubject}
+                  disabled={isCreatingSubject}
+                  className={`py-2 px-4 rounded-lg bg-indigo-600 text-sm text-white hover:bg-indigo-700 transition-colors ${isCreatingSubject ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isCreatingSubject ? 'Creating...' : 'Create Subject'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

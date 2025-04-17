@@ -205,7 +205,7 @@ function LandingPage() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="text-sm text-zinc-400 ml-12"
           >
-            Your personal exam preparation platform | {currentDate}
+            Your personal exam preparation platform 
           </motion.p>
         </div>
         <motion.div
