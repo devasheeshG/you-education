@@ -16,4 +16,4 @@ COPY pyproject.toml ./
 
 # Install dependencies
 RUN poetry config virtualenvs.create false \
-    && poetry instal --no-interaction --no-ansi
+    && poetry install --no-interaction --no-ansi
