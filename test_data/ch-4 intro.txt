@@ -1,0 +1,25 @@
+﻿Dynamic Programming
+Dynamic programming is a name, coined by Richard Bellman in 1955. Dynamic
+programming, as greedy method, is a powerful algorithm design technique that can be
+used when the solution to the problem may be viewed as the result of a sequence of
+decisions. In the greedy method we make irrevocable decisions one at a time, using a
+greedy criterion. However, in dynamic programming we examine the decision
+sequence to see whether an optimal decision sequence contains optimal decision
+subsequence.
+When optimal decision sequences contain optimal decision subsequences, we can
+establish recurrence equations, called dynamic-programming recurrence equations,
+that enable us to solve the problem in an efficient way.
+Dynamic programming is based on the principle of optimality (also coined by
+Bellman). The principle of optimality states that no matter whatever the initial state
+and initial decision are, the remaining decision sequence must constitute an optimal
+decision sequence with regard to the state resulting from the first decision. The
+principle implies that an optimal decision sequence is comprised of optimal decision
+subsequences. Since the principle of optimality may not hold for some formulations of
+some problems, it is necessary to verify that it does hold for the problem being
+solved. Dynamic programming cannot be applied when this principle does not hold.
+The steps in a dynamic programming solution are:
+ Verify that the principle of optimality holds
+ Set up the dynamic-programming recurrence equations
+ Solve the dynamic-programming recurrence equations for the value ofthe
+optimalsolution.
+ Perform a trace back step in which the solution itself is constructed.

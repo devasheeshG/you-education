@@ -1,0 +1,155 @@
+﻿Binary search or Half-interval search algorithm:
+1. This algorithm finds the position of a specified input value (the search "key") within
+an array sorted by key value.
+2. In each step, the algorithm compares the search key value with the key value of the
+middle element of the array.
+3. If the keys match, then a matching element has been found and its index, or position,
+is returned.
+4. Otherwise, if the search key is less than the middle element's key, then the algorithm
+repeats its action on the sub-array to the left of the middle element or, if the search
+key is greater, then the algorithm repeats on sub array to the right of the middle
+element.
+5. If the search element is less than the minimum position element or greater than the
+maximum position element then this algorithm returns not found
+
+
+```
+// A recursive binary search function. It returns
+// location of x in given array arr[l..r] is present,
+// otherwise -1
+int binarySearch(int arr[], int l, int r, int x)
+{
+if (r >= l) {
+int mid = l + (r - l) / 2;
+// If the element is present at the middle
+// itself
+if (arr[mid] == x)
+return mid;
+// If element is smaller than mid, then
+// it can only be present in left subarray
+if (arr[mid] > x)
+return binarySearch(arr, l, mid - 1, x);
+// Else the element can only be present
+// in right subarray
+return binarySearch(arr, mid + 1, r, x);
+}
+// We reach here when element is not
+// present in array
+return -1;
+}
+```
+
+
+
+
+
+
+
+
+
+
+Merge Sort:
+The merge sort splits the list to be sorted into two equal halves, and places them in separate
+arrays. This sorting method is an example of the DIVIDE-AND-CONQUER paradigm i.e. it
+breaks the data into two halves and then sorts the two half data sets recursively, and finally
+merges them to obtain the complete sorted list. The merge sort is a comparison sort and has an algorithmic complexity of O (n log n). Elementary implementations of the merge sort make use of two arrays - one for each half of the data set. The following image depicts the complete procedure of merge sort.
+
+
+Advantages of Merge Sort:
+1. Marginally faster than the heap sort for larger sets
+2. Merge Sort always does lesser number of comparisons than Quick Sort. Worst case for
+merge sort does about 39% less comparisons against quick sort’s average case.
+3. Merge sort is often the best choice for sorting a linked list because the slow random-
+access performance of a linked list makes some other algorithms (such as quick sort)
+perform poorly, and others (such as heap sort) completely impossible
+
+
+Computing Time for Merge sort:
+T(n)= a if n=1;
+2T(n/2)+ cn if n>1
+
+
+By representing it by in the form of Asymptotic notation O is
+T(n)=O(nlog n). 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Quick Sort
+Quick Sort is an algorithm based on the DIVIDE-AND-CONQUER paradigm that selects a pivot element and reorders the given list in such a way that all elements smaller to it are on one side and those bigger than it are on the other. Then the sub lists are recursively sorted until the list getsn completely sorted. The time complexity of this algorithm is O (n log n).
+
+
+1. Auxiliary space used in the average case for implementing recursive function calls is
+O (log n) and hence proves to be a bit space costly, especially when it comes to large
+data sets. 2
+2. Its worst case has a time complexity of O (n ) which can prove very fatal for large
+data sets. 
+
+
+Algorithm for Quick sort
+```
+Algorithm quickSort (a, low, high) {
+If(high>low) then{
+m=partition(a,low,high);
+if(low<m) then quick(a,low,m);
+if(m+1<high) then quick(a,m+1,high);
+}}
+Algorithm partition(a, low, high){
+i=low,j=high;
+mid=(low+high)/2;
+pivot=a[mid];
+while(i<=j) do { while(a[i]<=pivot)
+i++;
+while(a[j]>pivot)
+j--;
+if(i<=j){ temp=a[i];
+a[i]=a[j];
+a[j]=temp;
+I++;
+--;
+}}
+return j;
+}
+```
