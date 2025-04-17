@@ -31,7 +31,7 @@ class MilvusClient:
             record: MilvusChunkRecord objects containing chunk_id, reference_id and embedding
         """
         try:
-            logger.debug(f"Inserting vector into Milvus: {record}")
+            logger.debug(f"Inserting vector into Milvus for chunk: {record.chunk_id}")
             self.collection.insert(record.model_dump())
         except Exception as e:
             logger.error(f"Error inserting vectors into Milvus: {str(e)}")
@@ -41,8 +41,8 @@ class MilvusClient:
         self, 
         query_vector: list[float], 
         reference_ids: list[str], 
-        limit: int = 5, 
-        threshold: float = 0.5
+        limit: int, 
+        threshold: float
     ) -> list:
         """
         Search for similar vectors in Milvus.
@@ -59,22 +59,36 @@ class MilvusClient:
         try:
             logger.debug(f"Searching for similar vectors in Milvus with query vector")
             search_params = {
-                "metric_type": "L2",
+                "metric_type": "COSINE",
                 "params": {"nprobe": 10}
             }
             
             # Format reference_ids for query
             ref_ids_str = ", ".join([f"'{ref_id}'" for ref_id in reference_ids])
-            expr = f"reference_id in [{ref_ids_str}] and distance < {threshold}"
+            expr = f"reference_id in [{ref_ids_str}]"
             
             results = self.collection.search(
                 data=[query_vector],
                 anns_field="embedding",
                 param=search_params,
-                limit=limit,
+                limit=limit * 3,
                 expr=expr
             )
-            logger.debug(f"Search results: {results}")
+            
+            # Post-process results to apply threshold filter on distances
+            filtered_results = []
+            for hit in results[0]:
+                # For COSINE similarity, higher scores are better (closer to 1)
+                # Convert to a distance metric by using 1-score for consistent comparison with threshold
+                distance = 1 - hit.score
+                if distance < threshold:
+                    filtered_results.append(hit)
+                    if len(filtered_results) >= limit:
+                        break
+            
+            # Create a new result object with the filtered hits
+            results[0] = filtered_results[:limit]
+            logger.debug(f"Search results after filtering: {len(results[0])} items")
             return results[0]
         except Exception as e:
             logger.error(f"Error searching vectors in Milvus: {str(e)}")
