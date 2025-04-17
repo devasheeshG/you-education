@@ -1,7 +1,7 @@
 # Path: app/routers/references.py
 # Description: This file contains the routers for the References API.
 
-import io, uuid, re
+import io, uuid, re, tempfile
 from openai import OpenAI
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Path, status
 from sqlalchemy.orm import Session
@@ -150,7 +150,10 @@ def upload_reference(
         # Load the document and parse it
         try:
             loader_class = LANGCHAIN_LOADERS_MAPPING[file_type]
-            loader: BaseLoader = loader_class(file.file)
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp.write(file.file.read())
+                tmp.flush()
+                loader: BaseLoader = loader_class(tmp.name)
             documents = loader.load()
         except Exception as e:
             logger.error(f"Error parsing file: {str(e)}")
@@ -185,7 +188,7 @@ def upload_reference(
             
             # Create MongoDB document
             mongodb_chunk = MongoDbChunkDocument(
-                chunk_id=chunk_record.id,
+                chunk_id=str(chunk_record.id),
                 content=chunk.page_content,
             )
             mongodb_client.insert_chunk(mongodb_chunk)
@@ -195,12 +198,12 @@ def upload_reference(
             embedding = oai_emb_client.embeddings.create(
                 input=chunk.page_content, 
                 model=settings.EMBEDDINGS_MODEL_NAME
-            )
+            ).data[0].embedding
             
             # Create Milvus record
             milvus_record = MilvusChunkRecord(
-                chunk_id=chunk_record.id,
-                reference_id=reference.id,
+                chunk_id=str(chunk_record.id),
+                reference_id=str(reference.id),
                 embedding=embedding,
             )
             milvus_client.insert_vector(milvus_record)
@@ -208,8 +211,11 @@ def upload_reference(
         # Upload to MinIO
         if CONTENT_TYPE_MAPPING[file_type]:
             try:
+                # Reset file position to the beginning
+                file.file.seek(0)
+                
                 minio_client.upload_file(
-                    file_data=io.BytesIO(file.read()),
+                    file_data=io.BytesIO(file.file.read()),
                     object_name=f"{exam_id}/{file.filename}",
                     content_type=CONTENT_TYPE_MAPPING[file_type],
                 )
@@ -329,26 +335,29 @@ def create_reference(
             
             # Create MongoDB document
             mongodb_chunk = MongoDbChunkDocument(
-                chunk_id=chunk_record.id,
+                chunk_id=str(chunk_record.id),
                 content=chunk.page_content,
             )
             mongodb_client.insert_chunk(mongodb_chunk)
             logger.debug(f"Inserted chunk into MongoDB: {mongodb_chunk}")
 
             # Generate embedding
-            embedding = oai_emb_client.embeddings.create(chunk.page_content)
+            embedding = oai_emb_client.embeddings.create(
+                input=chunk.page_content,
+                model=settings.EMBEDDINGS_MODEL_NAME
+            ).data[0].embedding
             
             # Create Milvus record
             milvus_record = MilvusChunkRecord(
-                chunk_id=chunk_record.id,
-                reference_id=reference.id,
+                chunk_id=str(chunk_record.id),
+                reference_id=str(reference.id),
                 embedding=embedding,
             )
             milvus_client.insert_vector(milvus_record)
         
         return ReferenceCreateResponse(
             id=reference.id,
-            type=request.file_type,
+            type=request.type,
             name=request.url
         )
     

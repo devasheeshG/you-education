@@ -1,129 +1,235 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import UploadResourceModal from '../models/upload_resources';
-import { v4 as uuidv4 } from 'uuid';
-import TabsContainer from './tabs_container';
 import { motion } from 'framer-motion';
+import { 
+  getExamReferences, 
+  uploadReferenceFile, 
+  createReferenceFromUrl, 
+  deleteReference,
+  getReferenceDownloadUrl,
+  Reference as ApiReference
+} from '../app/api/references';
 
 // Resource type definition
 type Resource = {
   id: string;
   name: string;
   type: 'pdf' | 'txt' | 'md' | 'ppt' | 'pptx' | 'doc' | 'docx' | 'youtube' | 'website';
-  url: string;
+  url?: string;
   dateAdded: string;
-  size?: string; // For files
-  thumbnail?: string; // For videos/images
+  size?: string;
+  thumbnail?: string;
   description?: string;
 };
 
+// No need for props now as we'll get the examId from the URL
 export default function Resources() {
+  const params = useParams();
+  // Extract the examId from the URL params
+  const examId = params?.id as string || '';
+
   const [resources, setResources] = useState<Resource[]>([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
-  // Fetch initial resources (mock data for now)
-  useEffect(() => {
-    // Simulating API call to fetch resources
-    setTimeout(() => {
-      setResources([
-        {
-          id: '1',
-          name: 'Physics Notes.pdf',
-          type: 'pdf',
-          url: '/resources/physics-notes.pdf',
-          dateAdded: '2025-04-10',
-          size: '2.4 MB',
-          description: 'Comprehensive notes on quantum mechanics and relativity'
-        },
-        {
-          id: '2',
-          name: 'Mathematics Formulas.docx',
-          type: 'docx',
-          url: '/resources/math-formulas.docx',
-          dateAdded: '2025-04-08',
-          size: '1.1 MB',
-          description: 'Collection of important formulas for calculus and algebra'
-        },
-        {
-          id: '3',
-          name: 'Introduction to Chemistry',
-          type: 'txt',
-          url: '/resources/intro-chemistry.txt',
-          dateAdded: '2025-04-12',
-          size: '450 KB',
-          description: 'Basic chemistry concepts and principles'
-        }
-      ]);
+  // Fetch resources from the API
+  const fetchResources = async () => {
+    try {
+      if (!examId) {
+        setError("No exam ID found in URL");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      setDebugInfo(`Fetching resources for exam ID: ${examId}...`);
+      
+      console.log("Fetching resources for exam:", examId);
+      const data = await getExamReferences(examId);
+      
+      setDebugInfo("Resources fetched. Processing data...");
+      
+      // Process the response
+      if (!data || !data.references) {
+        setError("Invalid response format from API");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Convert API references to our Resource type
+      const formattedResources = data.references.map(convertApiReferenceToResource);
+      console.log("Formatted resources:", formattedResources);
+      setDebugInfo(null);
+      setResources(formattedResources);
+    } catch (err: any) {
+      console.error('Failed to fetch resources:', err);
+      setError(`Failed to load resources: ${err.message || 'Unknown error'}`);
+      setDebugInfo(`Error details: ${JSON.stringify(err)}`);
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, []);
+    }
+  };
+
+  // Convert API reference to our Resource type
+  const convertApiReferenceToResource = (ref: ApiReference): Resource => {
+    return {
+      id: ref.id,
+      name: ref.name,
+      type: determineResourceType(ref.type),
+      dateAdded: new Date().toISOString().split('T')[0], // API might not provide this
+    };
+  };
+
+  // Helper function to map API resource types to our UI types
+  const determineResourceType = (apiType: string): Resource['type'] => {
+    switch (apiType) {
+      case 'pdf': return 'pdf';
+      case 'txt': return 'txt';
+      case 'md': return 'md';
+      case 'ppt': case 'pptx': return 'ppt';
+      case 'doc': case 'docx': return 'docx';
+      case 'yt_video_url': return 'youtube';
+      case 'website_url': return 'website';
+      default: return 'pdf'; // Default fallback
+    }
+  };
+
+  // Fetch resources on component mount
+  useEffect(() => {
+    if (!examId) {
+      console.error("No examId found in URL params");
+      setError("No exam ID found in URL");
+      setIsLoading(false);
+      return;
+    }
+    
+    console.log("Component mounted with examId from URL:", examId);
+    fetchResources();
+  }, [examId]);
+
+  // Get download URL for a resource when selected
+  useEffect(() => {
+    if (selectedResource && !downloadUrls[selectedResource.id]) {
+      const fetchDownloadUrl = async () => {
+        try {
+          setDebugInfo(`Fetching download URL for ${selectedResource.id}...`);
+          const { url } = await getReferenceDownloadUrl(examId, selectedResource.id);
+          setDownloadUrls(prev => ({
+            ...prev,
+            [selectedResource.id]: url
+          }));
+          setDebugInfo(null);
+        } catch (err: any) {
+          console.error('Failed to get download URL:', err);
+          setDebugInfo(`Failed to get download URL: ${err.message}`);
+        }
+      };
+      
+      fetchDownloadUrl();
+    }
+  }, [selectedResource, downloadUrls, examId]);
 
   // Handle resource upload
-  const handleResourceUpload = (uploadedResources: any) => {
-    const currentDate = new Date().toISOString().split('T')[0];
-    const newResources: Resource[] = [];
-
-    // Process uploaded files
-    if (uploadedResources.files && uploadedResources.files.length > 0) {
-      uploadedResources.files.forEach((file: File) => {
-        const extension = file.name.split('.').pop()?.toLowerCase();
-        let type = 'pdf';
-        
-        // Determine file type
-        if (extension === 'txt') type = 'txt' as const;
-        else if (extension === 'md') type = 'md' as const;
-        else if (['ppt', 'pptx'].includes(extension || '')) type = 'ppt' as const;
-        else if (['doc', 'docx'].includes(extension || '')) type = 'doc' as const;
-        
-        newResources.push({
-          id: uuidv4(),
-          name: file.name,
-          type: type as any,
-          url: URL.createObjectURL(file),
-          dateAdded: currentDate,
-          size: formatFileSize(file.size)
-        });
-      });
+  const handleResourceUpload = async (uploadData: any) => {
+    if (!examId) {
+      setError("No exam ID provided");
+      return;
     }
-
-    // Process YouTube link
-    if (uploadedResources.youtubeLink) {
-      const videoId = getYoutubeVideoId(uploadedResources.youtubeLink);
-      newResources.push({
-        id: uuidv4(),
-        name: `YouTube Video (${videoId})`,
-        type: 'youtube',
-        url: uploadedResources.youtubeLink,
-        dateAdded: currentDate,
-        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-      });
+    
+    try {
+      setDebugInfo("Processing upload...");
+      const newResources: Resource[] = [];
+      
+      // Handle file uploads
+      if (uploadData.files && uploadData.files.length > 0) {
+        for (const file of uploadData.files) {
+          try {
+            setDebugInfo(`Uploading file: ${file.name}`);
+            const uploadedReference = await uploadReferenceFile(examId, file);
+            newResources.push(convertApiReferenceToResource(uploadedReference));
+          } catch (err: any) {
+            console.error(`Failed to upload file ${file.name}:`, err);
+            setDebugInfo(`Upload failed for ${file.name}: ${err.message}`);
+          }
+        }
+      }
+      
+      // Handle YouTube link
+      if (uploadData.youtubeLink) {
+        try {
+          setDebugInfo("Processing YouTube link...");
+          const reference = await createReferenceFromUrl(examId, {
+            type: 'yt_video_url',
+            url: uploadData.youtubeLink
+          });
+          
+          const resource = convertApiReferenceToResource(reference);
+          resource.thumbnail = `https://img.youtube.com/vi/${getYoutubeVideoId(uploadData.youtubeLink)}/hqdefault.jpg`;
+          newResources.push(resource);
+        } catch (err: any) {
+          console.error('Failed to add YouTube link:', err);
+          setDebugInfo(`Failed to add YouTube link: ${err.message}`);
+        }
+      }
+      
+      // Handle website link
+      if (uploadData.websiteLink) {
+        try {
+          setDebugInfo("Processing website link...");
+          const reference = await createReferenceFromUrl(examId, {
+            type: 'website_url',
+            url: uploadData.websiteLink
+          });
+          
+          newResources.push(convertApiReferenceToResource(reference));
+        } catch (err: any) {
+          console.error('Failed to add website link:', err);
+          setDebugInfo(`Failed to add website link: ${err.message}`);
+        }
+      }
+      
+      // Update resources list with new ones at the top
+      if (newResources.length > 0) {
+        setResources(prev => [...newResources, ...prev]);
+        setDebugInfo(null);
+      } else {
+        setDebugInfo("No resources were successfully uploaded");
+      }
+      
+      setShowUploadModal(false);
+    } catch (err: any) {
+      console.error('Error in resource upload:', err);
+      setDebugInfo(`Upload error: ${err.message}`);
     }
-
-    // Process website link
-    if (uploadedResources.websiteLink) {
-      const hostname = new URL(uploadedResources.websiteLink).hostname;
-      newResources.push({
-        id: uuidv4(),
-        name: hostname,
-        type: 'website',
-        url: uploadedResources.websiteLink,
-        dateAdded: currentDate
-      });
-    }
-
-    // Add new resources to the list
-    setResources(prev => [...newResources, ...prev]);
-    setShowUploadModal(false);
   };
 
   // Delete a resource
-  const handleDeleteResource = (id: string) => {
-    setResources(prev => prev.filter(resource => resource.id !== id));
-    if (selectedResource?.id === id) {
-      setSelectedResource(null);
+  const handleDeleteResource = async (id: string) => {
+    if (!examId) {
+      setError("No exam ID provided");
+      return;
+    }
+    
+    try {
+      setDebugInfo(`Deleting resource ${id}...`);
+      await deleteReference(examId, id);
+      setResources(prev => prev.filter(resource => resource.id !== id));
+      
+      if (selectedResource?.id === id) {
+        setSelectedResource(null);
+      }
+      setDebugInfo(null);
+    } catch (err: any) {
+      console.error('Failed to delete resource:', err);
+      setDebugInfo(`Delete failed: ${err.message}`);
     }
   };
 
@@ -233,12 +339,38 @@ export default function Resources() {
             </svg>
             Add Resource
           </motion.button>
+          <div className="text-xs text-zinc-500">
+            Exam ID: {examId ? `${examId.substring(0, 8)}...` : 'Not found in URL'}
+          </div>
         </div>
+        
+        {/* Debug information */}
+        {debugInfo && (
+          <div className="mb-4 p-2 bg-yellow-900/20 border border-yellow-700/30 rounded-md text-xs text-yellow-200">
+            <div className="font-mono">{debugInfo}</div>
+          </div>
+        )}
         
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+            <div className="flex flex-col justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mb-3"></div>
+              <div className="text-sm text-zinc-400">Loading resources...</div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-40 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-sm text-zinc-400">{error}</p>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={fetchResources}
+                className="mt-4 text-sm bg-zinc-700 text-white px-4 py-2 rounded-md hover:bg-zinc-600 transition-all"
+              >
+                Try Again
+              </motion.button>
             </div>
           ) : resources.length > 0 ? (
             <div className="space-y-1">
@@ -300,16 +432,16 @@ export default function Resources() {
             <div className="mt-3 flex items-center gap-3">
               <motion.a 
                 whileHover={{ scale: 1.05 }}
-                href={selectedResource.url} 
+                href={downloadUrls[selectedResource.id] || '#'}
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1 rounded-md hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-900/30"
+                className={`text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1 rounded-md hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-900/30 ${!downloadUrls[selectedResource.id] ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                   <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                 </svg>
-                View Resource
+                {downloadUrls[selectedResource.id] ? 'View Resource' : 'Loading URL...'}
               </motion.a>
             </div>
           </div>

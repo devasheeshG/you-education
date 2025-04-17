@@ -9,5 +9,4 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     reference_ids: List[uuid.UUID]
-    exam_id: uuid.UUID
     previous_messages: Optional[List[ChatMessage]] = None
