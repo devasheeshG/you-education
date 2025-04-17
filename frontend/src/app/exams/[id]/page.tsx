@@ -7,6 +7,7 @@ import Chat from '@/components/chat';
 import References from '@/components/resources';
 import TabsContainer from '@/components/tabs_container';
 import VideoDescription from '@/components/video_description';
+import Notes from '@/components/notes';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ExamData {
@@ -26,8 +27,8 @@ const ExamPage = () => {
   const examId = params.id as string;
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showVideo, setShowVideo] = useState(false);
-  const [selectedLeaf, setSelectedLeaf] = useState<string | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<any>(null);
 
   useEffect(() => {
     const fetchExamData = async () => {
@@ -66,9 +67,9 @@ const ExamPage = () => {
     fetchExamData();
   }, [examId]);
 
-  const handleLeafClick = (url: string) => {
-    setSelectedLeaf(url);
-    setShowVideo(true);
+  const handleLeafClick = (node: any) => {
+    setSelectedNode(node);
+    setShowDetail(true);
   };
 
   if (loading) {
@@ -134,46 +135,54 @@ const ExamPage = () => {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col lg:flex-row w-full gap-1 overflow-hidden">
-        {/* Conditionally show video panel */}
-        {showVideo && (
+        {/* Conditionally show detail panel */}
+        {showDetail && (
           <motion.div 
             className="min-w-0 flex-none w-full lg:w-[35%] flex flex-col h-full overflow-auto custom-scroll"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            {/* Video Player: show selected leaf video */}
+            {/* Detail panel: video or notes */}
             <motion.div
               className="border border-zinc-700 rounded-xl p-2 mb-2 bg-zinc-800/50 shadow-lg backdrop-blur-sm h-[400px]"
               whileHover={{ borderColor: 'rgb(129, 140, 248)' }}
               transition={{ duration: 0.3 }}
             >
-              {selectedLeaf ? (
-                <YouTubePlayer url={selectedLeaf} />
+              {selectedNode?.type === 'youtube_video' ? (
+                <YouTubePlayer url={selectedNode.resource.data.url} />
+              ) : selectedNode?.type === 'Notes' ? (
+                <Notes
+                  title={selectedNode.title}
+                  markdownContent={selectedNode.resource.data.content || ''}
+                  className="h-full"
+                />
               ) : (
                 <div className="flex items-center justify-center h-full text-center">
-                  <p className="text-zinc-400">Click a mindmap leaf to play a video</p>
+                  <p className="text-zinc-400">Select a leaf node to see details</p>
                 </div>
               )}
             </motion.div>
 
-            {/* Video Description */}
-            <motion.div
-              className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm p-2"
-              whileHover={{ borderColor: "rgb(129, 140, 248)" }}
-              transition={{ duration: 0.3 }}
-            >
-              <VideoDescriptionStyled 
-                isYouTubeVideo={!!selectedLeaf} 
-                videoData={examData.videoData}
-              />
-            </motion.div>
+            {/* Video description only for YouTube nodes */}
+            {selectedNode?.type === 'youtube_video' && (
+              <motion.div
+                className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm p-2"
+                whileHover={{ borderColor: 'rgb(129, 140, 248)' }}
+                transition={{ duration: 0.3 }}
+              >
+                <VideoDescriptionStyled 
+                  isYouTubeVideo={true} 
+                  videoData={examData.videoData}
+                />
+              </motion.div>
+            )}
           </motion.div>
         )}
 
         {/* Tabs panel occupies remaining width */}
         <motion.div 
-          className={`min-w-0 flex-1 w-full ${showVideo ? 'lg:w-[65%]' : ''} flex flex-col h-full overflow-auto`}
+          className={`min-w-0 flex-1 w-full ${showDetail ? 'lg:w-[65%]' : ''} flex flex-col h-full overflow-auto`}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
