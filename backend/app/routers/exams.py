@@ -11,6 +11,7 @@ from app.utils.models import (
     ExamItem,
     ExamCreateRequest,
     ExamCreateResponse,
+    GetExamResponse,
     ListExamResponse,
     UpdateExamRequest,
     UpdateExamResponse,
@@ -116,6 +117,64 @@ def create_exam(
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating exam: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create exam."
+        )
+
+@router.get(
+    "/{exam_id}",
+    response_model=GetExamResponse,
+    responses={
+        200: {"description": "Exam retrieved successfully"},
+        404: {"description": "Not found - Exam or Subject not found"},
+        500: {"description": "Internal server error - Unexpected error occurred"}
+    },
+    summary="Get an exam by ID",
+)
+def get_exam(
+    exam_id: uuid.UUID,
+    db: Session = Depends(get_db)
+) -> GetExamResponse:
+    """
+    Retrieve an exam by its ID.
+    
+    - **exam_id**: UUID of the exam to retrieve
+    """
+    try:
+        # Find the exam, eager load subject
+        exam = (
+            db.query(Exam)
+            .options(joinedload(Exam.subject))
+            .filter(Exam.id == exam_id)
+            .first()
+        )
+
+        if not exam:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+
+        # Create proper Pydantic models from SQLAlchemy models
+        subject_item = SubjectItem(
+            id=exam.subject.id,
+            name=exam.subject.name,
+            color=exam.subject.color
+        )
+
+        return GetExamResponse(
+            id=exam.id,
+            name=exam.name,
+            description=exam.description,
+            exam_datetime=exam.exam_datetime,
+            total_hours_to_dedicate=exam.total_hours_to_dedicate,
+            subject=subject_item
+        )
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+
+    except Exception as e:
+        logger.error(f"Error retrieving exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create exam."
