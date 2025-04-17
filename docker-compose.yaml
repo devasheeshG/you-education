@@ -10,6 +10,26 @@ services:
       - ./backend:/app
     networks:
       - personal_prod
+  you-education-backend-init-mongodb-migration:
+    image: you-education-backend:latest
+    build: .
+    container_name: you-education-backend-init-mongodb-migration
+    command: python -m init.mongodb_migrations
+    volumes:
+      - ./backend:/app
+    networks:
+      - personal_prod
+  you-education-backend-init-milvus-migration:
+    image: you-education-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: you-education-backend-init-milvus-migration
+    command: python -m init.milvus_migrations
+    volumes:
+      - ./backend:/app
+    networks:
+      - personal_prod
   you-education-backend:
     image: you-education-backend:latest
     build:
@@ -21,6 +41,8 @@ services:
       - ./backend:/app
     depends_on:
       you-education-backend-init-postgres-migration:
+        condition: service_completed_successfully
+      you-education-backend-init-mongodb-migration:
         condition: service_completed_successfully
     labels:
       - traefik.enable=true
