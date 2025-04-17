@@ -5,50 +5,77 @@ import { Transformer } from 'markmap-lib';
 import { Markmap } from 'markmap-view';
 import { INode } from 'markmap-common';
 import { motion } from 'framer-motion';
-import { log } from 'node:console';
+
+// Dummy API response types and data
+type ApiResource = { id: string; data: { url?: string; /* other data */ } };
+type ApiNode = {
+  title: string;
+  is_end_node: boolean;
+  type?: string;
+  resource?: ApiResource;
+  subtopics?: ApiNode[];
+};
+const apiData: ApiNode = {
+  title: 'STEM Exam Overview',
+  is_end_node: false,
+  subtopics: [
+    {
+      title: 'Mathematics',
+      is_end_node: false,
+      subtopics: [
+        {
+          title: 'Algebra',
+          is_end_node: false,
+          subtopics: [
+            { title: 'Linear Algebra Concepts', is_end_node: true, type: 'youtube_video', resource: { id: 'm1', data: { url: 'https://www.youtube.com/watch?v=QxddU3sjVRY' } } },
+            { title: 'Quadratic Equations Guide', is_end_node: true, type: 'Notes', resource: { id: 'm2', data: {} } }
+          ]
+        },
+        {
+          title: 'Calculus',
+          is_end_node: false,
+          subtopics: [
+            { title: 'Limits Explained', is_end_node: true, type: 'youtube_video', resource: { id: 'm3', data: { url: 'https://www.youtube.com/watch?v=AX6OrbgS8lI' } } },
+            { title: 'Derivatives Summary', is_end_node: true, type: 'Notes', resource: { id: 'm4', data: {} } },
+            { title: 'Integrals Deep Dive', is_end_node: true, type: 'youtube_video', resource: { id: 'm5', data: { url: 'https://www.youtube.com/watch?v=5FQf_TrTmkM' } } }
+          ]
+        }
+      ]
+    },
+    {
+      title: 'Physics',
+      is_end_node: false,
+      subtopics: [
+        {
+          title: 'Mechanics',
+          is_end_node: false,
+          subtopics: [
+            { title: 'Kinematics Basics', is_end_node: true, type: 'youtube_video', resource: { id: 'p1', data: { url: 'https://www.youtube.com/watch?v=K5KAc5CoCuk' } } },
+            { title: 'Dynamics Notes', is_end_node: true, type: 'Notes', resource: { id: 'p2', data: {} } }
+          ]
+        },
+        {
+          title: 'Optics',
+          is_end_node: false,
+          subtopics: [
+            { title: 'Reflection Principles', is_end_node: true, type: 'youtube_video', resource: { id: 'p3', data: { url: 'https://www.youtube.com/watch?v=4TIGwaBHuzg' } } },
+            { title: 'Refraction Explained', is_end_node: true, type: 'youtube_video', resource: { id: 'p4', data: { url: 'hhttps://www.youtube.com/watch?v=4TIGwaBHuzg' } } },
+            { title: 'Wave Optics Notes', is_end_node: true, type: 'Notes', resource: { id: 'p5', data: {} } }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// Map to store YouTube resources by title
+const resourceMap = new Map<string, ApiResource>();
 
 // Create a custom type that makes children optional
 type MindMapNode = {
   content: string;
   children?: MindMapNode[];
   isLeaf?: boolean; // Add this to track leaf nodes
-};
-
-// Dummy data for the mindmap - structured as an exam with topics and subtopics
-const examData: MindMapNode = {
-  content: 'Biology Exam',
-  children: [
-    {
-      content: 'Cell Biology',
-      children: [
-        { content: 'Cell Structure', isLeaf: true },
-        { content: 'Cell Function', isLeaf: true },
-        { 
-          content: 'Cell Division', 
-          children: [
-            { content: 'Mitosis', isLeaf: true },
-            { content: 'Meiosis', isLeaf: true }
-          ] 
-        }
-      ]
-    },
-    {
-      content: 'Genetics',
-      children: [
-        { content: 'Inheritance', isLeaf: true },
-        { content: 'DNA Structure', isLeaf: true },
-        { content: 'Gene Expression', isLeaf: true }
-      ]
-    },
-    {
-      content: 'Ecology',
-      children: [
-        { content: 'Ecosystems', isLeaf: true },
-        { content: 'Population Dynamics', isLeaf: true },
-        { content: 'Environmental Impact', isLeaf: true }
-      ]
-    }
-  ]
 };
 
 // Helper functions moved outside of the component
@@ -70,24 +97,25 @@ function childToMarkdown(node: MindMapNode, level: number): string {
   return markdown;
 }
 
-function examDataToMarkdown(node: MindMapNode): string {
-  let markdown = `# ${node.content}\n`;
-  
-  if (node.children && node.children.length > 0) {
-    node.children.forEach(child => {
-      markdown += childToMarkdown(child, 2);
+// Convert API JSON to markdown and populate resourceMap
+function apiToMarkdown(node: ApiNode, level = 1): string {
+  // Track YouTube resources
+  if (node.is_end_node && node.type === 'youtube_video' && node.resource) {
+    resourceMap.set(node.title, node.resource);
+  }
+  let md = `${'#'.repeat(level)} ${node.title}\n`;
+  if (node.subtopics) {
+    node.subtopics.forEach(child => {
+      md += apiToMarkdown(child, level + 1);
     });
   }
-  
-  return markdown;
+  return md;
 }
 
-// Function to transform our custom data structure to the format required by markmap
-const transformer = new Transformer();
-
-export default function MindmapPage({ onLeafClick }: { onLeafClick: (content: string) => void }) {
+export default function MindmapPage({ onLeafClick }: { onLeafClick: (url: string) => void }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const markmapRef = useRef<Markmap | null>(null);
+  const transformer = new Transformer();
 
   const [zoomLevel, setZoomLevel] = useState(1);
   const [is3DView, setIs3DView] = useState(false);
@@ -126,8 +154,10 @@ export default function MindmapPage({ onLeafClick }: { onLeafClick: (content: st
       markmapRef.current.destroy();
     }
     
-    // Transform our data to the format expected by markmap
-    const { root } = transformer.transform(examDataToMarkdown(examData));
+    // Prepare markdown from API data
+    resourceMap.clear();
+    const md = apiToMarkdown(apiData);
+    const { root } = transformer.transform(md);
     
     // Create the markmap with theme matching the app
     const mm = Markmap.create(svgRef.current, {
@@ -153,9 +183,13 @@ export default function MindmapPage({ onLeafClick }: { onLeafClick: (content: st
       const nodeData = (nodeG as any).__data__ as INode;
       const isLeaf = !nodeData.children || nodeData.children.length === 0;
       if (isLeaf) {
-        event.stopPropagation();
-        handleReset();
-        onLeafClick(nodeData.content);
+        // only handle YouTube resources
+        const res = resourceMap.get(nodeData.content);
+        if (res && res.data.url) {
+          event.stopPropagation();
+          handleReset();
+          onLeafClick(res.data.url);
+        }
       }
     };
     
