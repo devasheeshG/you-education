@@ -121,7 +121,7 @@ def upload_reference(
         db.add(reference)
         db.commit()
         db.refresh(reference)
-
+        
         # Upload to MinIO
         if CONTENT_TYPE_MAPPING[file_type]:
             try:
