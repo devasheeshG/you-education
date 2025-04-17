@@ -112,6 +112,43 @@ function LandingPage() {
     }
   };
 
+  // Add a function to handle exam deletion
+  const handleDeleteExam = async (examId: string) => {
+    try {
+      // Show confirmation dialog
+      if (!confirm("Are you sure you want to delete this exam?")) {
+        return; // User cancelled deletion
+      }
+      
+      setLoading(true);
+      const response = await fetch(`/api/proxy/exams/${examId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete exam');
+      }
+      
+      // Show success message
+      setSuccessMessage('Exam deleted successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+      
+      // Remove the exam from state
+      setUpcomingExams(prevExams => prevExams.filter(exam => exam.id !== examId));
+      setPastExams(prevExams => prevExams.filter(exam => exam.id !== examId));
+      
+    } catch (err) {
+      console.error('Error deleting exam:', err);
+      setError('Failed to delete exam. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Format date from ISO string to readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -259,7 +296,7 @@ function LandingPage() {
                   <h3 className="text-xs uppercase tracking-wider text-zinc-400 mb-1">Completed Exams</h3>
                   <p className="text-2xl font-medium text-indigo-300">{pastExams.length}</p>
                 </motion.div>
-                <motion.div 
+                {/* <motion.div 
                   whileHover={{ scale: 1.03 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-5 backdrop-blur-sm shadow-lg"
@@ -268,7 +305,7 @@ function LandingPage() {
                   <p className="text-2xl font-medium text-emerald-400">
                     {pastExams.length > 0 ? '88%' : 'N/A'}
                   </p>
-                </motion.div>
+                </motion.div> */}
                 <motion.div 
                   whileHover={{ scale: 1.03 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -302,7 +339,6 @@ function LandingPage() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {upcomingExams.map((exam, index) => {
-                    const progress = calculateMockProgress(exam);
                     return (
                       <motion.div 
                         key={exam.id}
@@ -319,19 +355,22 @@ function LandingPage() {
                             </div>
                             <h3 className="font-medium text-lg">{exam.name}</h3>
                           </div>
-                          <button className="text-zinc-400 hover:text-zinc-200 transition-colors" aria-label="More options">
+                          <button 
+                            onClick={() => handleDeleteExam(exam.id)}
+                            className="text-zinc-400 hover:text-red-400 transition-colors" 
+                            aria-label="Delete exam"
+                          >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
                           </button>
                         </div>
                         
                         <div className="mt-4 mb-4">
-                          <p className="text-xs text-zinc-400 mb-1">Study progress</p>
-                          <div className="w-full bg-zinc-700 rounded-full h-2">
-                            <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full" style={{ width: `${progress}%` }}></div>
-                          </div>
-                          <p className="text-xs text-right mt-1 text-zinc-400">{progress}%</p>
+                          <p className="text-xs text-zinc-400 mb-1">Description</p>
+                          <p className="text-sm text-zinc-300 line-clamp-3 h-12 overflow-hidden">
+                            {exam.description || "No description available"}
+                          </p>
                         </div>
                         
                         <div className="flex justify-between items-center">
@@ -392,11 +431,25 @@ function LandingPage() {
                           </div>
                           <h3 className="font-medium text-lg">{exam.name}</h3>
                         </div>
-                        <span className="inline-flex items-center rounded-md bg-emerald-900/30 px-2 py-1 text-xs font-medium text-emerald-300">
-                          {getMockScore(exam.id)}
-                        </span>
+                        <button 
+                          onClick={() => handleDeleteExam(exam.id)}
+                          className="text-zinc-400 hover:text-red-400 transition-colors" 
+                          aria-label="Delete exam"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="flex justify-between items-center mt-6">
+                      
+                      <div className="mt-4 mb-4">
+                        <p className="text-xs text-zinc-400 mb-1">Description</p>
+                        <p className="text-sm text-zinc-300 line-clamp-3 h-12 overflow-hidden">
+                          {exam.description || "No description available"}
+                        </p>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2 text-zinc-400 text-xs">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
