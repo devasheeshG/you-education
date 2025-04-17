@@ -25,14 +25,14 @@ class ReferenceUploadResponse(BaseModel):
 
 # Create Reference (URL)
 class ReferenceCreateRequest(BaseModel):
-    type: ReferencesTypeEnum
+    # type: ReferencesTypeEnum
     url: str
     
-    @field_validator("type")
-    def validate_type(cls, v):
-        if v not in [ReferencesTypeEnum.YT_VIDEO_URL, ReferencesTypeEnum.WEBSITE_URL]:
-            raise ValueError("Invalid reference type for URL")
-        return v
+    # @field_validator("type")
+    # def validate_type(cls, v):
+    #     if v not in [ReferencesTypeEnum.YT_VIDEO_URL, ReferencesTypeEnum.WEBSITE_URL]:
+    #         raise ValueError("Invalid reference type for URL")
+    #     return v
 
 class ReferenceCreateResponse(BaseModel):
     id: uuid.UUID
