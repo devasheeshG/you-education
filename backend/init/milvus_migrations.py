@@ -1,4 +1,11 @@
-from pymilvus import Collection, CollectionSchema, FieldSchema, DataType, MilvusClient, connections
+from pymilvus import (
+    Collection, 
+    CollectionSchema, 
+    FieldSchema, 
+    DataType, 
+    MilvusClient, 
+    connections
+)
 from app.config import get_settings
 from app.logger import get_logger
 
@@ -20,6 +27,7 @@ def create_milvus_collections() -> None:
         # Define collection schema
         fields = [
             FieldSchema(name="chunk_id", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
+            FieldSchema(name="reference_id", dtype=DataType.VARCHAR, max_length=36),
             FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=settings.EMBEDDINGS_N_DIM)
         ]
 

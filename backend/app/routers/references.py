@@ -2,8 +2,10 @@
 # Description: This file contains the routers for the References API.
 
 import io, uuid
+from openai import OpenAI
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Path, status
 from sqlalchemy.orm import Session
+from langchain_community.document_loaders.base import BaseLoader
 from langchain_community.document_loaders import (
     TextLoader,
     PyPDFLoader,
@@ -13,7 +15,7 @@ from langchain_community.document_loaders import (
     YoutubeLoader,
     UnstructuredURLLoader,
 )
-from app.utils.postgres import Reference, Exam, get_db
+from app.utils.postgres import Reference, Exam, Chunks, get_db
 from app.utils.models import (
     ReferencesTypeEnum,
     ReferenceCreateRequest,
@@ -25,11 +27,28 @@ from app.utils.models import (
 )
 from app.utils.minio.client import get_minio_client
 from app.logger import get_logger
+from app.config import get_settings
 
-minio_client = get_minio_client()
-
+# Get logger
 logger = get_logger()
 
+# Get app config
+settings = get_settings()
+
+# Initialize MinIO client
+minio_client = get_minio_client()
+
+# Initialize OpenAI client for generating embeddings
+oai_emb_client = OpenAI(
+    api_key=settings.EMBEDDINGS_API_KEY,
+    base_url=settings.EMBEDDINGS_BASE_URL,
+)
+
+# Initialize MongoDB client
+
+# Initialize Milvus client
+
+# Initialize FastAPI router
 router = APIRouter(
     prefix="/exams/{exam_id}/references",
     tags=["References"]
@@ -44,6 +63,17 @@ CONTENT_TYPE_MAPPING = {
     ReferencesTypeEnum.MD: "text/markdown",
     ReferencesTypeEnum.WEBSITE_URL: None,
     ReferencesTypeEnum.YT_VIDEO_URL: None,
+}
+
+# Langchain document loaders mapping
+LANGCHAIN_LOADERS_MAPPING = {
+    ReferencesTypeEnum.TXT: TextLoader,
+    ReferencesTypeEnum.PDF: PyPDFLoader,
+    ReferencesTypeEnum.PPT: UnstructuredPowerPointLoader,
+    ReferencesTypeEnum.DOCX: Docx2txtLoader,
+    ReferencesTypeEnum.MD: UnstructuredMarkdownLoader,
+    ReferencesTypeEnum.WEBSITE_URL: UnstructuredURLLoader,
+    ReferencesTypeEnum.YT_VIDEO_URL: YoutubeLoader,
 }
 
 @router.post(
@@ -65,7 +95,6 @@ def upload_reference(
 ) -> ReferenceUploadResponse:
     """
     Upload a reference file for an exam.
-    
     Supported file types:
     - txt: Plain text files
     - pdf: PDF documents
@@ -73,8 +102,9 @@ def upload_reference(
     - docx: Word documents
     - md: Markdown files
     
-    - **file**: The reference file to upload
-    - **exam_id**: UUID of the exam this reference belongs to
+    Parameters:
+        - **file**: The reference file to upload
+        - **exam_id**: UUID of the exam this reference belongs to
     """
     try:
         # Check if exam exists
@@ -109,6 +139,18 @@ def upload_reference(
         
         # Map file extension to enum type
         file_type = ReferencesTypeEnum(file_ext)
+        
+        # Load the document and parse it
+        try:
+            loader_class = LANGCHAIN_LOADERS_MAPPING[file_type]
+            loader: BaseLoader = loader_class(file.file)
+            documents = loader.load()
+        except Exception as e:
+            logger.error(f"Error parsing file: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to parse file: {str(e)}"
+            )
         
         # Save reference in database
         reference = Reference(

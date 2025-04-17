@@ -69,3 +69,23 @@ class Reference(DatabaseBase):
             ondelete="CASCADE",
         ),
     )
+
+class Chunks(DatabaseBase):
+    __tablename__ = "chunks"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    reference_id = Column(UUID(as_uuid=True), nullable=False)
+    chunk_number = Column(Integer, nullable=False)
+    total_chunks = Column(Integer, nullable=False)
+    
+    # Define relationship to Reference
+    reference = relationship("Reference", backref="chunks")
+    
+    __table_args__ = (
+        UniqueConstraint("reference_id", "chunk_number", name="unique_chunk_number_per_reference"),
+        ForeignKeyConstraint(
+            ["reference_id"],
+            ["references.id"],
+            ondelete="CASCADE",
+        ),
+    )
