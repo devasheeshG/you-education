@@ -62,7 +62,6 @@ def create_milvus_collections() -> None:
         logger.info(f"Collection {settings.MILVUS_COLLECTION} created successfully")
     else:
         # Load existing collection
-        # collection = Collection(settings.MILVUS_COLLECTION, using=settings.MILVUS_DB)
         collection = Collection(settings.MILVUS_COLLECTION)
         collection.load()
         logger.info(f"Collection {settings.MILVUS_COLLECTION} already exists")
