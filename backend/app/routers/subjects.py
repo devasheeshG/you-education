@@ -228,8 +228,6 @@ def delete_subject(
         db.delete(subject)
         db.commit()
         
-        return None
-        
     except HTTPException:
         # Re-raise HTTP exceptions so they maintain their status codes
         raise

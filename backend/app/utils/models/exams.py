@@ -36,8 +36,8 @@ class ExamItem(BaseModel):
     subject: SubjectItem
 
 class ListExamResponse(BaseModel):
-    upcomming_exams: Optional[List[ExamItem]] = None
-    previous_exams: Optional[List[ExamItem]] = None
+    upcomming_exams: List[ExamItem]
+    previous_exams: List[ExamItem]
 
 # Get Exam
 # We'll never need to get a single exam by ID.

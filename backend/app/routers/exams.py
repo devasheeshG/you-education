@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from app.utils.postgres import Exam, Subject, get_db
 from app.utils.models import (
+    SubjectItem,
+    ExamItem,
     ExamCreateRequest,
     ExamCreateResponse,
     ListExamResponse,
@@ -97,7 +99,11 @@ def create_exam(
             description=exam.description,
             exam_datetime=exam.exam_datetime,
             total_hours_to_dedicate=exam.total_hours_to_dedicate,
-            subject=exam.subject
+            subject=SubjectItem(
+                id=exam.subject.id,
+                name=exam.subject.name,
+                color=exam.subject.color
+            )
         )
 
     except HTTPException:
@@ -146,9 +152,9 @@ def list_exams(
         for exam in exams:
             # Ensure exam_datetime is timezone-aware for comparison
             exam_dt_aware = exam.exam_datetime
-            if exam_dt_aware.tzinfo is None:
-                # Assuming UTC if no timezone info (adjust if DB stores differently)
-                exam_dt_aware = exam_dt_aware.replace(tzinfo=timezone.utc)
+            # if exam_dt_aware.tzinfo is None:
+            #     # Assuming UTC if no timezone info (adjust if DB stores differently)
+            #     exam_dt_aware = exam_dt_aware.replace(tzinfo=timezone.utc)
             
             if exam_dt_aware >= now:
                 upcoming_exams.append(exam)
@@ -159,9 +165,42 @@ def list_exams(
         upcoming_exams.sort(key=lambda x: x.exam_datetime)
         previous_exams.sort(key=lambda x: x.exam_datetime, reverse=True)
 
+        # Convert SQLAlchemy models to Pydantic models
+        upcoming_exam_items = [
+            ExamItem(
+                id=exam.id,
+                name=exam.name,
+                description=exam.description,
+                exam_datetime=exam.exam_datetime,
+                total_hours_to_dedicate=exam.total_hours_to_dedicate,
+                subject=SubjectItem(
+                    id=exam.subject.id,
+                    name=exam.subject.name,
+                    color=exam.subject.color
+                )
+            )
+            for exam in upcoming_exams
+        ]
+
+        previous_exam_items = [
+            ExamItem(
+                id=exam.id,
+                name=exam.name,
+                description=exam.description,
+                exam_datetime=exam.exam_datetime,
+                total_hours_to_dedicate=exam.total_hours_to_dedicate,
+                subject=SubjectItem(
+                    id=exam.subject.id,
+                    name=exam.subject.name,
+                    color=exam.subject.color
+                )
+            )
+            for exam in previous_exams
+        ]
+
         return ListExamResponse(
-            upcomming_exams=upcoming_exams if upcoming_exams else None,
-            previous_exams=previous_exams if previous_exams else None
+            upcomming_exams=upcoming_exam_items,
+            previous_exams=previous_exam_items
         )
 
     except Exception as e:
@@ -261,7 +300,11 @@ def update_exam(
             description=exam.description,
             exam_datetime=exam.exam_datetime,
             total_hours_to_dedicate=exam.total_hours_to_dedicate,
-            subject=exam.subject
+            subject=SubjectItem(
+                id=exam.subject.id,
+                name=exam.subject.name,
+                color=exam.subject.color
+            )
         )
 
     except HTTPException:
@@ -309,8 +352,6 @@ def delete_exam(
         # Delete the exam
         db.delete(exam)
         db.commit()
-
-        return None # FastAPI handles the 204 response
 
     except HTTPException:
         # Re-raise HTTP exceptions

@@ -10,6 +10,7 @@ from .subjects import (
     UpdateSubjectResponse,
 )
 from .exams import (
+    ExamItem,
     ExamCreateRequest,
     ExamCreateResponse,
     ListExamResponse,
@@ -37,6 +38,7 @@ __all__ = [
     "UpdateSubjectResponse",
     
     # Exams
+    "ExamItem",
     "ExamCreateRequest",
     "ExamCreateResponse",
     "ListExamResponse",
