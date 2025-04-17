@@ -9,7 +9,6 @@ import {
   uploadReferenceFile, 
   createReferenceFromUrl, 
   deleteReference,
-  getReferenceDownloadUrl,
   Reference as ApiReference
 } from '../app/api/references';
 
@@ -35,8 +34,6 @@ export default function Resources() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-  const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   // Fetch resources from the API
@@ -80,10 +77,14 @@ export default function Resources() {
 
   // Convert API reference to our Resource type
   const convertApiReferenceToResource = (ref: ApiReference): Resource => {
+    // Use type assertion to bypass the TypeScript error
+    const reference = ref as (ApiReference & { url?: string });
+    
     return {
       id: ref.id,
       name: ref.name,
       type: determineResourceType(ref.type),
+      url: reference.url || '', // Access url with a fallback
       dateAdded: new Date().toISOString().split('T')[0], // API might not provide this
     };
   };
@@ -115,28 +116,6 @@ export default function Resources() {
     fetchResources();
   }, [examId]);
 
-  // Get download URL for a resource when selected
-  useEffect(() => {
-    if (selectedResource && !downloadUrls[selectedResource.id]) {
-      const fetchDownloadUrl = async () => {
-        try {
-          setDebugInfo(`Fetching download URL for ${selectedResource.id}...`);
-          const { url } = await getReferenceDownloadUrl(examId, selectedResource.id);
-          setDownloadUrls(prev => ({
-            ...prev,
-            [selectedResource.id]: url
-          }));
-          setDebugInfo(null);
-        } catch (err: any) {
-          console.error('Failed to get download URL:', err);
-          setDebugInfo(`Failed to get download URL: ${err.message}`);
-        }
-      };
-      
-      fetchDownloadUrl();
-    }
-  }, [selectedResource, downloadUrls, examId]);
-
   // Handle resource upload
   const handleResourceUpload = async (uploadData: any) => {
     if (!examId) {
@@ -154,7 +133,10 @@ export default function Resources() {
           try {
             setDebugInfo(`Uploading file: ${file.name}`);
             const uploadedReference = await uploadReferenceFile(examId, file);
-            newResources.push(convertApiReferenceToResource(uploadedReference));
+            
+            if (uploadedReference) {
+              newResources.push(convertApiReferenceToResource(uploadedReference));
+            }
           } catch (err: any) {
             console.error(`Failed to upload file ${file.name}:`, err);
             setDebugInfo(`Upload failed for ${file.name}: ${err.message}`);
@@ -171,9 +153,12 @@ export default function Resources() {
             url: uploadData.youtubeLink
           });
           
-          const resource = convertApiReferenceToResource(reference);
-          resource.thumbnail = `https://img.youtube.com/vi/${getYoutubeVideoId(uploadData.youtubeLink)}/hqdefault.jpg`;
-          newResources.push(resource);
+          if (reference) {
+            const resource = convertApiReferenceToResource(reference);
+            resource.thumbnail = `https://img.youtube.com/vi/${getYoutubeVideoId(uploadData.youtubeLink)}/hqdefault.jpg`;
+            resource.url = uploadData.youtubeLink; // Ensure URL is set
+            newResources.push(resource);
+          }
         } catch (err: any) {
           console.error('Failed to add YouTube link:', err);
           setDebugInfo(`Failed to add YouTube link: ${err.message}`);
@@ -189,7 +174,11 @@ export default function Resources() {
             url: uploadData.websiteLink
           });
           
-          newResources.push(convertApiReferenceToResource(reference));
+          if (reference) {
+            const resourceWithUrl = convertApiReferenceToResource(reference);
+            resourceWithUrl.url = uploadData.websiteLink; // Ensure URL is set explicitly
+            newResources.push(resourceWithUrl);
+          }
         } catch (err: any) {
           console.error('Failed to add website link:', err);
           setDebugInfo(`Failed to add website link: ${err.message}`);
@@ -222,10 +211,6 @@ export default function Resources() {
       setDebugInfo(`Deleting resource ${id}...`);
       await deleteReference(examId, id);
       setResources(prev => prev.filter(resource => resource.id !== id));
-      
-      if (selectedResource?.id === id) {
-        setSelectedResource(null);
-      }
       setDebugInfo(null);
     } catch (err: any) {
       console.error('Failed to delete resource:', err);
@@ -235,6 +220,8 @@ export default function Resources() {
 
   // Helper function to get YouTube video ID
   const getYoutubeVideoId = (url: string): string => {
+    if (!url) return 'default';
+    
     try {
       const urlObj = new URL(url);
       if (urlObj.hostname === 'youtu.be') {
@@ -249,13 +236,16 @@ export default function Resources() {
     return 'default';
   };
 
-  // Format file size
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  // Function to get hostname from URL
+  const getHostname = (url: string) => {
+    if (!url) return 'unknown';
+    
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace('www.', '');
+    } catch (e) {
+      return 'unknown';
+    }
   };
 
   // Get appropriate icon for resource type
@@ -323,6 +313,48 @@ export default function Resources() {
     }
   };
 
+  // Get resource action buttons based on type
+  const getResourceActions = (resource: Resource) => {
+    if (resource.type === 'youtube' && resource.url) {
+      return (
+        <motion.a 
+          whileHover={{ scale: 1.05 }}
+          href={resource.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs bg-red-700 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors flex items-center gap-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+          </svg>
+          Watch
+        </motion.a>
+      );
+    }
+    
+    if (resource.type === 'website' && resource.url) {
+      return (
+        <motion.a 
+          whileHover={{ scale: 1.05 }}
+          href={resource.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs bg-purple-700 text-white px-2 py-1 rounded hover:bg-purple-600 transition-colors flex items-center gap-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+          </svg>
+          Visit
+        </motion.a>
+      );
+    }
+    
+    // For document types, return null to remove the Open/Download button
+    return null;
+  };
+
   // Resource list for the References tab
   const ReferencesContent = () => {
     return (
@@ -351,7 +383,8 @@ export default function Resources() {
           </div>
         )}
         
-        <div className="flex-1 overflow-y-auto">
+        {/* Resource List - Now using full width */}
+        <div className="w-full overflow-y-auto">
           {isLoading ? (
             <div className="flex flex-col justify-center items-center h-40">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mb-3"></div>
@@ -373,34 +406,172 @@ export default function Resources() {
               </motion.button>
             </div>
           ) : resources.length > 0 ? (
-            <div className="space-y-1">
-              {resources.map(resource => (
-                <motion.div 
-                  key={resource.id} 
-                  whileHover={{ scale: 1.01, borderColor: "rgb(165, 180, 252)" }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  className={`flex items-center justify-between p-3 rounded-md border ${selectedResource?.id === resource.id ? 'border-indigo-500 bg-zinc-800' : 'border-zinc-700 bg-zinc-800/50'} cursor-pointer group`}
-                  onClick={() => setSelectedResource(resource)}
-                >
-                  <div className="flex items-center gap-3">
-                    {getResourceIcon(resource.type)}
-                    <span className="text-sm truncate max-w-[180px] text-zinc-100">{resource.name}</span>
+            <div className="space-y-6">
+              {/* Group resources by type */}
+              <div>
+                <h3 className="text-xs uppercase text-zinc-500 mb-2 font-semibold">Documents</h3>
+                {resources.filter(r => 
+                  ['pdf', 'txt', 'md', 'ppt', 'pptx', 'doc', 'docx'].includes(r.type)
+                ).length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {resources.filter(r => 
+                      ['pdf', 'txt', 'md', 'ppt', 'pptx', 'doc', 'docx'].includes(r.type)
+                    ).map(resource => (
+                      <motion.div 
+                        key={resource.id} 
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        className={`flex flex-col p-3 rounded-md border border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800 group`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {getResourceIcon(resource.type)}
+                            <div>
+                              <span className="text-sm truncate max-w-[180px] text-zinc-100 block">{resource.name}</span>
+                              <span className="text-xs text-zinc-500">
+                                {resource.type.toUpperCase()} • {resource.dateAdded}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteResource(resource.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-zinc-400 hover:text-red-400 transition-colors"
+                            title="Delete reference"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="mt-auto pt-2 flex justify-end">
+                          {getResourceActions(resource)}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                  
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteResource(resource.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-zinc-400 hover:text-red-400 transition-colors"
-                    title="Delete reference"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </motion.div>
-              ))}
+                ) : (
+                  <div className="text-xs text-zinc-500 italic py-2 px-3 bg-zinc-800/50 rounded-md">No documents added yet</div>
+                )}
+              </div>
+
+              {/* YouTube Videos */}
+              <div>
+                <h3 className="text-xs uppercase text-zinc-500 mb-2 font-semibold">YouTube Videos</h3>
+                {resources.filter(r => r.type === 'youtube').length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {resources.filter(r => r.type === 'youtube').map(resource => (
+                      <motion.div 
+                        key={resource.id} 
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        className="border border-zinc-700 rounded-md overflow-hidden bg-zinc-800/50 hover:bg-zinc-800 group"
+                      >
+                        <div className="aspect-video bg-black relative overflow-hidden">
+                          {resource.thumbnail ? (
+                            <img 
+                              src={resource.thumbnail} 
+                              alt={resource.name} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                              <svg className="h-12 w-12 text-red-500 opacity-70" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                              </svg>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-40">
+                            {getResourceActions(resource)}
+                          </div>
+                        </div>
+                        <div className="p-3 flex justify-between items-center">
+                          <div>
+                            <div className="text-sm text-zinc-100 truncate max-w-[200px]">{resource.name}</div>
+                            <div className="text-xs text-red-400 flex items-center gap-1">
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                              </svg>
+                              YouTube Video
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => handleDeleteResource(resource.id)}
+                            className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-400 transition-colors"
+                            title="Delete reference"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-zinc-500 italic py-2 px-3 bg-zinc-800/50 rounded-md">No YouTube videos added yet</div>
+                )}
+              </div>
+
+              {/* Websites */}
+              <div>
+                <h3 className="text-xs uppercase text-zinc-500 mb-2 font-semibold">Websites</h3>
+                {resources.filter(r => r.type === 'website').length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {resources.filter(r => r.type === 'website').map(resource => (
+                      <motion.div 
+                        key={resource.id} 
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        className="border border-zinc-700 rounded-md overflow-hidden bg-zinc-800/50 hover:bg-zinc-800 group"
+                      >
+                        <div className="relative">
+                          <div className="bg-zinc-900 p-2 flex items-center space-x-2 border-b border-zinc-700">
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            </div>
+                            <div className="flex-1 text-center">
+                              <div className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-400 text-xs truncate max-w-xs mx-auto">
+                                {resource.url || 'Website URL'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-3 flex justify-between items-center">
+                          <div>
+                            <div className="text-sm text-zinc-100 truncate max-w-[200px]">{resource.name}</div>
+                            <div className="text-xs text-purple-400 flex items-center gap-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973zM10 18a8 8 0 100-16 8 8 0 000 16z" clipRule="evenodd" />
+                              </svg>
+                              {resource.url ? getHostname(resource.url) : 'Website'}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getResourceActions(resource)}
+                            <button 
+                              onClick={() => handleDeleteResource(resource.id)}
+                              className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-400 transition-colors"
+                              title="Delete reference"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-zinc-500 italic py-2 px-3 bg-zinc-800/50 rounded-md">No websites added yet</div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-40 text-center">
@@ -419,33 +590,6 @@ export default function Resources() {
             </div>
           )}
         </div>
-        
-        {selectedResource && (
-          <div className="mt-4 border-t border-zinc-700 pt-4">
-            <div className="flex justify-between items-start">
-              <h3 className="font-medium text-zinc-100">{selectedResource.name}</h3>
-              <span className="text-xs text-zinc-400">{selectedResource.dateAdded}</span>
-            </div>
-            {selectedResource.description && (
-              <p className="mt-2 text-sm text-zinc-400">{selectedResource.description}</p>
-            )}
-            <div className="mt-3 flex items-center gap-3">
-              <motion.a 
-                whileHover={{ scale: 1.05 }}
-                href={downloadUrls[selectedResource.id] || '#'}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={`text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-1 rounded-md hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center gap-2 shadow-sm shadow-indigo-900/30 ${!downloadUrls[selectedResource.id] ? 'opacity-50 pointer-events-none' : ''}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                  <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                </svg>
-                {downloadUrls[selectedResource.id] ? 'View Resource' : 'Loading URL...'}
-              </motion.a>
-            </div>
-          </div>
-        )}
       </div>
     );
   };

@@ -7,7 +7,7 @@ import { INode } from 'markmap-common';
 import { motion } from 'framer-motion';
 
 // Dummy API response types and data
-type ApiResource = { id: string; data: { url?: string; /* other data */ } };
+type ApiResource = { id: string; data: { url?: string; content?: string; /* other data */ } };
 type ApiNode = {
   title: string;
   is_end_node: boolean;
@@ -28,7 +28,13 @@ const apiData: ApiNode = {
           is_end_node: false,
           subtopics: [
             { title: 'Linear Algebra Concepts', is_end_node: true, type: 'youtube_video', resource: { id: 'm1', data: { url: 'https://www.youtube.com/watch?v=QxddU3sjVRY' } } },
-            { title: 'Quadratic Equations Guide', is_end_node: true, type: 'Notes', resource: { id: 'm2', data: {} } }
+            { title: 'Quadratic Equations Guide', is_end_node: true, type: 'Notes', resource: { id: 'm2', data: { content: `## Quadratic Equations Guide
+
+This guide covers solving quadratic equations using factoring, completing the square, and the quadratic formula.
+
+- Factoring
+- Completing the square
+- Quadratic formula` } } }
           ]
         },
         {
@@ -36,7 +42,13 @@ const apiData: ApiNode = {
           is_end_node: false,
           subtopics: [
             { title: 'Limits Explained', is_end_node: true, type: 'youtube_video', resource: { id: 'm3', data: { url: 'https://www.youtube.com/watch?v=AX6OrbgS8lI' } } },
-            { title: 'Derivatives Summary', is_end_node: true, type: 'Notes', resource: { id: 'm4', data: {} } },
+            { title: 'Derivatives Summary', is_end_node: true, type: 'Notes', resource: { id: 'm4', data: { content: `## Derivatives Summary
+
+A derivative represents the rate of change of a function:
+
+\`f'(x) = \lim_{h\to0} \frac{f(x+h)-f(x)}{h}\`
+
+Use power rule, product rule, and chain rule.` } } },
             { title: 'Integrals Deep Dive', is_end_node: true, type: 'youtube_video', resource: { id: 'm5', data: { url: 'https://www.youtube.com/watch?v=5FQf_TrTmkM' } } }
           ]
         }
@@ -51,7 +63,13 @@ const apiData: ApiNode = {
           is_end_node: false,
           subtopics: [
             { title: 'Kinematics Basics', is_end_node: true, type: 'youtube_video', resource: { id: 'p1', data: { url: 'https://www.youtube.com/watch?v=K5KAc5CoCuk' } } },
-            { title: 'Dynamics Notes', is_end_node: true, type: 'Notes', resource: { id: 'p2', data: {} } }
+            { title: 'Dynamics Notes', is_end_node: true, type: 'Notes', resource: { id: 'p2', data: { content: `## Dynamics Notes
+
+Dynamics studies forces and motion:
+
+- Newton's laws of motion
+- Free body diagrams
+- Applications in engineering` } } }
           ]
         },
         {
@@ -60,7 +78,13 @@ const apiData: ApiNode = {
           subtopics: [
             { title: 'Reflection Principles', is_end_node: true, type: 'youtube_video', resource: { id: 'p3', data: { url: 'https://www.youtube.com/watch?v=4TIGwaBHuzg' } } },
             { title: 'Refraction Explained', is_end_node: true, type: 'youtube_video', resource: { id: 'p4', data: { url: 'hhttps://www.youtube.com/watch?v=4TIGwaBHuzg' } } },
-            { title: 'Wave Optics Notes', is_end_node: true, type: 'Notes', resource: { id: 'p5', data: {} } }
+            { title: 'Wave Optics Notes', is_end_node: true, type: 'Notes', resource: { id: 'p5', data: { content: `## Wave Optics Notes
+
+Wave optics deals with diffraction, interference, and polarization:
+
+1. Interference patterns
+2. Double-slit experiment
+3. Polarization concepts` } } }
           ]
         }
       ]
@@ -68,8 +92,8 @@ const apiData: ApiNode = {
   ]
 };
 
-// Map to store YouTube resources by title
-const resourceMap = new Map<string, ApiResource>();
+// Map to store ApiNode resources by lowercased trimmed title
+const resourceMap = new Map<string, ApiNode>();
 
 // Create a custom type that makes children optional
 type MindMapNode = {
@@ -99,9 +123,10 @@ function childToMarkdown(node: MindMapNode, level: number): string {
 
 // Convert API JSON to markdown and populate resourceMap
 function apiToMarkdown(node: ApiNode, level = 1): string {
-  // Track YouTube resources
-  if (node.is_end_node && node.type === 'youtube_video' && node.resource) {
-    resourceMap.set(node.title, node.resource);
+  // Track all leaf-node resources using lowercased title key
+  if (node.is_end_node && node.resource) {
+    const key = node.title.trim().toLowerCase();
+    resourceMap.set(key, node);
   }
   let md = `${'#'.repeat(level)} ${node.title}\n`;
   if (node.subtopics) {
@@ -112,7 +137,7 @@ function apiToMarkdown(node: ApiNode, level = 1): string {
   return md;
 }
 
-export default function MindmapPage({ onLeafClick }: { onLeafClick: (url: string) => void }) {
+export default function MindmapPage({ onLeafClick }: { onLeafClick: (selection: { type?: string; title: string; resource: ApiResource }) => void }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const markmapRef = useRef<Markmap | null>(null);
   const transformer = new Transformer();
@@ -183,12 +208,18 @@ export default function MindmapPage({ onLeafClick }: { onLeafClick: (url: string
       const nodeData = (nodeG as any).__data__ as INode;
       const isLeaf = !nodeData.children || nodeData.children.length === 0;
       if (isLeaf) {
-        // only handle YouTube resources
-        const res = resourceMap.get(nodeData.content);
-        if (res && res.data.url) {
+        const titleKey = nodeData.content.trim().toLowerCase();
+        const nodeRecord = resourceMap.get(titleKey);
+        if (nodeRecord && nodeRecord.resource) {
           event.stopPropagation();
           handleReset();
-          onLeafClick(res.data.url);
+          onLeafClick({
+            type: nodeRecord.type,
+            title: nodeRecord.title,
+            resource: nodeRecord.resource
+          });
+        } else {
+          console.warn('No resource found for leaf:', nodeData.content);
         }
       }
     };
