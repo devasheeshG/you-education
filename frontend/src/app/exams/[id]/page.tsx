@@ -66,8 +66,8 @@ const ExamPage = () => {
     fetchExamData();
   }, [examId]);
 
-  const handleLeafClick = (topic: string) => {
-    setSelectedLeaf(topic);
+  const handleLeafClick = (url: string) => {
+    setSelectedLeaf(url);
     setShowVideo(true);
   };
 
@@ -106,8 +106,6 @@ const ExamPage = () => {
     );
   }
 
-  const hasYouTubeVideo = !!examData.youtubeUrl;
-
   return (
     <div className="h-screen bg-zinc-900 text-zinc-100 flex flex-col">
       <motion.header 
@@ -144,19 +142,17 @@ const ExamPage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            {/* Video Player */}
-            <motion.div 
+            {/* Video Player: show selected leaf video */}
+            <motion.div
               className="border border-zinc-700 rounded-xl p-2 mb-2 bg-zinc-800/50 shadow-lg backdrop-blur-sm h-[400px]"
-              whileHover={{ borderColor: "rgb(129, 140, 248)" }}
+              whileHover={{ borderColor: 'rgb(129, 140, 248)' }}
               transition={{ duration: 0.3 }}
             >
-              {hasYouTubeVideo ? (
-                <YouTubePlayer url={examData.youtubeUrl || ''} />
+              {selectedLeaf ? (
+                <YouTubePlayer url={selectedLeaf} />
               ) : (
                 <div className="flex items-center justify-center h-full text-center">
-                  <div>
-                    <p className="text-zinc-400">No video available for this exam</p>
-                  </div>
+                  <p className="text-zinc-400">Click a mindmap leaf to play a video</p>
                 </div>
               )}
             </motion.div>
@@ -168,7 +164,7 @@ const ExamPage = () => {
               transition={{ duration: 0.3 }}
             >
               <VideoDescriptionStyled 
-                isYouTubeVideo={hasYouTubeVideo} 
+                isYouTubeVideo={!!selectedLeaf} 
                 videoData={examData.videoData}
               />
             </motion.div>
