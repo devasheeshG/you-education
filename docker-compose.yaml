@@ -58,7 +58,7 @@ services:
       dockerfile: Dockerfile
     container_name: you-education-frontend
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - API_URL=http://you-education-backend:80/api
     depends_on:
       - you-education-backend
