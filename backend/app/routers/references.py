@@ -65,7 +65,7 @@ router = APIRouter(
 CONTENT_TYPE_MAPPING = {
     ReferencesTypeEnum.TXT: "text/plain",
     ReferencesTypeEnum.PDF: "application/pdf",
-    ReferencesTypeEnum.PPT: "application/vnd.ms-powerpoint",
+    ReferencesTypeEnum.PPTX: "application/vnd.ms-powerpoint",
     ReferencesTypeEnum.DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ReferencesTypeEnum.MD: "text/markdown",
     ReferencesTypeEnum.WEBSITE_URL: None,
@@ -76,7 +76,7 @@ CONTENT_TYPE_MAPPING = {
 LANGCHAIN_LOADERS_MAPPING = {
     ReferencesTypeEnum.TXT: TextLoader,
     ReferencesTypeEnum.PDF: PyPDFLoader,
-    ReferencesTypeEnum.PPT: UnstructuredPowerPointLoader,
+    ReferencesTypeEnum.PPTX: UnstructuredPowerPointLoader,
     ReferencesTypeEnum.DOCX: Docx2txtLoader,
     ReferencesTypeEnum.MD: UnstructuredMarkdownLoader,
     ReferencesTypeEnum.WEBSITE_URL: SeleniumURLLoader,
@@ -166,10 +166,10 @@ def upload_reference(
         
         # Validate file extension and type
         file_ext = file.filename.split('.')[-1].lower()
-        if file_ext not in ["txt", "pdf", "ppt", "docx", "md"]:
+        if file_ext not in ["txt", "pdf", "pptx", "docx", "md"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported file type: {file_ext}. Supported types: txt, pdf, ppt, docx, md"
+                detail=f"Unsupported file type: {file_ext}. Supported types: txt, pdf, pptx, docx, md"
             )
         
         # Map file extension to enum type

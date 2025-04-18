@@ -8,7 +8,7 @@ from typing import List
 class ReferencesTypeEnum(str, enum.Enum):
     TXT = "txt"
     PDF = "pdf"
-    PPT = "ppt"
+    PPTX = "pptx"
     DOCX = "docx"
     MD = "md"
     YT_VIDEO_URL = "yt_video_url"
