@@ -225,7 +225,7 @@ def stream_chat_response(messages: List[dict]) -> Iterator[str]:
             if chunk.choices and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
                 # Format as SSE
-                yield f"data: {content}"
+                yield f"data: {content}\n\n"
                 # Small delay to control streaming rate
                 time.sleep(0.01)
         
