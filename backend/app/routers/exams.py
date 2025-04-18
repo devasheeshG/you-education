@@ -162,13 +162,16 @@ def get_exam(
             color=exam.subject.color
         )
 
+        # Fix: Correctly construct the response with an 'exam' field
         return GetExamResponse(
-            id=exam.id,
-            name=exam.name,
-            description=exam.description,
-            exam_datetime=exam.exam_datetime,
-            total_hours_to_dedicate=exam.total_hours_to_dedicate,
-            subject=subject_item
+            exam=ExamItem(
+                id=exam.id,
+                name=exam.name,
+                description=exam.description,
+                exam_datetime=exam.exam_datetime,
+                total_hours_to_dedicate=exam.total_hours_to_dedicate,
+                subject=subject_item
+            )
         )
 
     except HTTPException:
@@ -179,7 +182,7 @@ def get_exam(
         logger.error(f"Error retrieving exam: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create exam."
+            detail="Failed to retrieve exam."
         )
 
 @router.get(
