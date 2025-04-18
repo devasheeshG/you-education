@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Transformer } from 'markmap-lib';
 import { Markmap } from 'markmap-view';
 import { INode } from 'markmap-common';
-import { motion } from 'framer-motion';
 
 // Dummy API response types and data
 type ApiResource = { id: string; data: { url?: string; content?: string; /* other data */ } };
@@ -96,30 +95,30 @@ Wave optics deals with diffraction, interference, and polarization:
 const resourceMap = new Map<string, ApiNode>();
 
 // Create a custom type that makes children optional
-type MindMapNode = {
-  content: string;
-  children?: MindMapNode[];
-  isLeaf?: boolean; // Add this to track leaf nodes
-};
+// type MindMapNode = {
+//   content: string;
+//   children?: MindMapNode[];
+//   isLeaf?: boolean; // Add this to track leaf nodes
+// };
 
 // Helper functions moved outside of the component
-function childToMarkdown(node: MindMapNode, level: number): string {
-  const heading = '#'.repeat(level);
-  let markdown = `${heading} ${node.content}\n`;
+// function childToMarkdown(node: MindMapNode, level: number): string {
+//   const heading = '#'.repeat(level);
+//   let markdown = `${heading} ${node.content}\n`;
   
-  // Add a data attribute to identify leaf nodes in the Markdown
-  if (node.isLeaf) {
-    markdown = `${heading} ${node.content} <!-- isLeaf -->\n`;
-  }
+//   // Add a data attribute to identify leaf nodes in the Markdown
+//   if (node.isLeaf) {
+//     markdown = `${heading} ${node.content} <!-- isLeaf -->\n`;
+//   }
   
-  if (node.children && node.children.length > 0) {
-    node.children.forEach(child => {
-      markdown += childToMarkdown(child, level + 1);
-    });
-  }
+//   if (node.children && node.children.length > 0) {
+//     node.children.forEach(child => {
+//       markdown += childToMarkdown(child, level + 1);
+//     });
+//   }
   
-  return markdown;
-}
+//   return markdown;
+// }
 
 // Convert API JSON to markdown and populate resourceMap
 function apiToMarkdown(node: ApiNode, level = 1): string {
