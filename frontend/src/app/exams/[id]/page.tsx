@@ -9,10 +9,34 @@ import Notes from '@/components/notes';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
+// Since we don't have direct access to modify the Chat and References components,
+// we'll create wrapper components that handle the examId prop
+const ChatWrapper = () => {
+  const params = useParams();
+  const examId = params.id as string;
+  return <Chat />;
+};
+
+const ReferencesWrapper = () => {
+  const params = useParams();
+  const examId = params.id as string;
+  return <References />;
+};
+
+interface SubjectData {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface ExamData {
   id: string;
-  title: string;
+  name: string;
   description: string;
+  exam_datetime: string;
+  total_hours_to_dedicate: number;
+  subject: SubjectData;
+  // Keep these for video functionality
   youtubeUrl?: string;
   videoData?: {
     title: string;
@@ -26,38 +50,51 @@ const ExamPage = () => {
   const examId = params.id as string;
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
   useEffect(() => {
     const fetchExamData = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
-        const dummyData: ExamData = {
-          id: examId,
-          title: 'Computer Networking Concepts Explained',
-          description: 'Learn the fundamental concepts of computer networking in this comprehensive lecture.',
-          youtubeUrl: 'https://youtu.be/dVlC9Uz7E08?si=0TBm4StcDftX4GH8',
-          videoData: {
-            title: 'Computer Networking Concepts Explained',
-            description: 'This comprehensive lecture covers all major networking concepts including protocols, routing, and network architecture. Perfect for beginners and intermediate learners looking to understand how the internet works, data transmission principles, and network security fundamentals.',
-            chapters: [
-              { time: '0:00', title: 'Introduction' },
-              { time: '5:30', title: 'Networking Fundamentals' },
-              { time: '12:45', title: 'TCP/IP Protocol' },
-              { time: '25:30', title: 'OSI Model Explained' },
-              { time: '35:15', title: 'Routing and Switching' },
-              { time: '45:20', title: 'Network Security Basics' },
-              { time: '55:40', title: 'Future of Networking' }
-            ]
-          }
-        };
-
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const response = await fetch(`/api/proxy/exams/${examId}`);
         
-        setExamData(dummyData);
+        if (!response.ok) {
+          throw new Error(response.status === 404 
+            ? 'Exam not found' 
+            : 'Failed to fetch exam data');
+        }
+        
+        const data = await response.json();
+        
+        // For video functionality, we'll still use dummy data for now
+        // This would be replaced with actual video data from API when available
+        const videoData = {
+          title: 'Computer Networking Concepts Explained',
+          description: 'This comprehensive lecture covers all major networking concepts including protocols, routing, and network architecture. Perfect for beginners and intermediate learners looking to understand how the internet works, data transmission principles, and network security fundamentals.',
+          chapters: [
+            { time: '0:00', title: 'Introduction' },
+            { time: '5:30', title: 'Networking Fundamentals' },
+            { time: '12:45', title: 'TCP/IP Protocol' },
+            { time: '25:30', title: 'OSI Model Explained' },
+            { time: '35:15', title: 'Routing and Switching' },
+            { time: '45:20', title: 'Network Security Basics' },
+            { time: '55:40', title: 'Future of Networking' }
+          ]
+        };
+        
+        // Combine the API response with video data for now
+        setExamData({
+          ...data.exam,
+          youtubeUrl: 'https://youtu.be/dVlC9Uz7E08?si=0TBm4StcDftX4GH8',
+          videoData
+        });
       } catch (error) {
         console.error('Error fetching exam data:', error);
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
       } finally {
         setLoading(false);
       }
@@ -87,7 +124,7 @@ const ExamPage = () => {
     );
   }
 
-  if (!examData) {
+  if (error || !examData) {
     return (
       <div className="min-h-screen bg-zinc-900 text-zinc-100 p-6">
         <motion.div 
@@ -96,17 +133,29 @@ const ExamPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-2xl font-medium mb-4">Exam not found</h1>
-          <p className="text-zinc-400 mb-6">The exam you&apos;re looking for doesn&apos;t exist or has been removed.</p>
-          <Link href="/exams" passHref>
-              <a className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:bg-indigo-700 transition-all duration-300 hover:scale-105">
-              Return to Exams
-              </a>
-        </Link>
+          <h1 className="text-2xl font-medium mb-4">
+            {error === 'Exam not found' ? 'Exam not found' : 'Error loading exam'}
+          </h1>
+          <p className="text-zinc-400 mb-6">
+            {error === 'Exam not found' 
+              ? "The exam you're looking for doesn't exist or has been removed."
+              : "There was a problem loading this exam. Please try again later."}
+          </p>
+          <Link href="/exams" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:bg-indigo-700 transition-all duration-300 hover:scale-105">
+            Return to Exams
+          </Link>
         </motion.div>
       </div>
     );
   }
+
+  // Format exam date
+  const examDate = new Date(examData.exam_datetime);
+  const formattedDate = examDate.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
   return (
     <div className="h-screen bg-zinc-900 text-zinc-100 flex flex-col">
@@ -128,8 +177,13 @@ const ExamPage = () => {
             </svg>
           </motion.div>
           <div>
-            <h1 className="text-2xl font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{examData.title}</h1>
-            <p className="text-sm text-zinc-400">Computer Science • Network Fundamentals</p>
+            <h1 className="text-2xl font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              {examData.name}
+            </h1>
+            <p className="text-sm text-zinc-400">
+              {examData.subject.name} • {formattedDate}
+              {examData.total_hours_to_dedicate > 0 && ` • ${examData.total_hours_to_dedicate} hours`}
+            </p>
           </div>
         </div>
       </motion.header>
@@ -194,13 +248,15 @@ const ExamPage = () => {
             transition={{ duration: 0.3 }}
           >
             <TabsContainerStyled defaultActive="Mindmap">
-              {{ Mindmap: <div className="h-full"><MindmapPage onLeafClick={handleLeafClick} /></div>, Chat: <div className="h-full"><Chat /></div>, References: <div className="h-full"><References /></div> }}
+              {{ 
+                Mindmap: <div className="h-full"><MindmapPage onLeafClick={handleLeafClick} /></div>, 
+                Chat: <div className="h-full"><ChatWrapper /></div>, 
+                References: <div className="h-full"><ReferencesWrapper /></div> 
+              }}
             </TabsContainerStyled>
           </motion.div>
         </motion.div>
       </div>
-
-      
     </div>
   );
 };
