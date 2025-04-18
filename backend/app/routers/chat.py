@@ -4,7 +4,7 @@
 import uuid, time
 from typing import List, Iterator
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from openai import OpenAI
 from app.utils.postgres import Reference, Exam, Chunks, get_db
@@ -187,9 +187,15 @@ def chat_with_references(
         logger.info(f"Chat messages: {messages}")
         
         # Stream the response
-        return StreamingResponse(
-            stream_chat_response(messages),
-            media_type="text/event-stream"
+        # return StreamingResponse(
+        #     stream_chat_response(messages),
+        #     media_type="text/event-stream"
+        # )
+        return JSONResponse(
+            content={
+                "response": generate_final_answer(messages),
+            },
+            status_code=status.HTTP_200_OK
         )
     
     except HTTPException:
@@ -239,3 +245,30 @@ def stream_chat_response(messages: List[dict]) -> Iterator[str]:
         logger.error(f"Error streaming chat response: {str(e)}")
         yield f"data: Error: {str(e)}\n\n"
         yield "data: [DONE]\n\n"
+
+def generate_final_answer(messages: List[dict]) -> str:
+    """
+    Generate the final answer from the AI model.
+    
+    Args:
+        messages: List of message dictionaries to send to the model
+        
+    Returns:
+        Final answer string
+    """
+    try:
+        # Create a single response from OpenAI
+        response = oai_llm_client.chat.completions.create(
+            model=settings.CHAT_LLM_MODEL_NAME,
+            messages=messages,
+            stream=False
+        )
+        
+        return response.choices[0].message.content
+    
+    except Exception as e:
+        logger.error(f"Error generating final answer: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate final answer."
+        )
