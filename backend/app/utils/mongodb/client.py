@@ -3,6 +3,7 @@
 
 import uuid
 from pymongo import MongoClient
+from typing import Optional
 from functools import lru_cache
 from app.config import get_settings
 from app.logger import get_logger
@@ -63,6 +64,66 @@ class MongoDBClient:
             self.collection.delete_many({"chunk_id": str(chunk_id)})
         except Exception as e:
             logger.error(f"Error deleting chunks from MongoDB: {str(e)}")
+            raise
+    
+    def insert_mindmap(self, exam_id: uuid.UUID, mindmap: dict) -> None:
+        """
+        Insert a mindmap into MongoDB.
+        
+        Args:
+            exam_id: UUID of the exam
+            mindmap: The mindmap data
+        """
+        try:
+            logger.debug(f"Inserting mindmap into MongoDB for exam: {exam_id}")
+            document = {
+                "exam_id": str(exam_id),
+                "mindmap": mindmap
+            }
+            # Use upsert to replace if exists or insert if not
+            self.db[settings.MONGO_COLLECTION_MINDMAPS].replace_one(
+                {"exam_id": str(exam_id)},
+                document,
+                upsert=True
+            )
+        except Exception as e:
+            logger.error(f"Error inserting mindmap into MongoDB: {str(e)}")
+            raise
+
+    def get_mindmap(self, exam_id: uuid.UUID) -> Optional[dict]:
+        """
+        Retrieve a mindmap from MongoDB.
+        
+        Args:
+            exam_id: UUID of the exam
+            
+        Returns:
+            The mindmap document or None if not found
+        """
+        try:
+            logger.debug(f"Retrieving mindmap from MongoDB for exam: {exam_id}")
+            mindmap_data = self.db[settings.MONGO_COLLECTION_MINDMAPS].find_one(
+                {"exam_id": str(exam_id)}
+            )
+            return mindmap_data
+        except Exception as e:
+            logger.error(f"Error retrieving mindmap from MongoDB: {str(e)}")
+            raise
+
+    def delete_mindmap(self, exam_id: uuid.UUID) -> None:
+        """
+        Delete a mindmap from MongoDB.
+        
+        Args:
+            exam_id: UUID of the exam
+        """
+        try:
+            logger.debug(f"Deleting mindmap from MongoDB for exam: {exam_id}")
+            self.db[settings.MONGO_COLLECTION_MINDMAPS].delete_many(
+                {"exam_id": str(exam_id)}
+            )
+        except Exception as e:
+            logger.error(f"Error deleting mindmap from MongoDB: {str(e)}")
             raise
 
 @lru_cache

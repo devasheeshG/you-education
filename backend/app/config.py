@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     MONGO_PORT: str
     MONGO_DB: str
     MONGO_COLLECTION_REFERENCES_CHUNKS: str
+    MONGO_COLLECTION_MINDMAPS: str
 
     def get_mongo_uri(self) -> str:
         return f"mongodb://{self.MONGO_USER}:{self.MONGO_PASSWORD}@{self.MONGO_HOST}:{self.MONGO_PORT}/{self.MONGO_DB}?authSource=admin"
@@ -44,16 +45,24 @@ class Settings(BaseSettings):
     # MILVUS_DB: str
     MILVUS_COLLECTION: str
 
-    # LLM Configuration
-    LLM_BASE_URL: str
-    LLM_API_KEY: str
-    LLM_MODEL_NAME: str
+    # LLM Configuration for chat
+    CHAT_LLM_BASE_URL: str
+    CHAT_LLM_API_KEY: str
+    CHAT_LLM_MODEL_NAME: str
+    
+    # LLM Configuration for mindmap generation
+    MINDMAP_LLM_BASE_URL: str
+    MINDMAP_LLM_API_KEY: str
+    MINDMAP_LLM_MODEL_NAME: str
     
     # Embeddings Configuration
     EMBEDDINGS_BASE_URL: str
     EMBEDDINGS_API_KEY: str
     EMBEDDINGS_MODEL_NAME: str
     EMBEDDINGS_N_DIM: int
+
+    # YouTube API Configuration
+    YOUTUBE_API_KEY: str
 
     class Config:
         env_file = ".env"

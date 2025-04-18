@@ -52,6 +52,35 @@ services:
     networks:
       - personal_prod
 
+  # you-education-frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     args:
+  #       - NEXT_PUBLIC_API_URL=https://you-education.devasheeshmishra.com/api
+  #   container_name: you-education-frontend
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #     - /app/.next
+  #   environment:
+  #     - NODE_ENV=production
+  #     - NEXT_PUBLIC_API_URL=https://you-education.devasheeshmishra.com/api
+  #   depends_on:
+  #     - you-education-backend
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.you-education-frontend.rule=Host(`you-education.devasheeshmishra.com`)
+  #     - traefik.http.routers.you-education-frontend.entrypoints=personal
+  #     - traefik.http.services.you-education-frontend.loadbalancer.server.port=3000
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - personal_prod
+
 networks:
   personal_prod:
     external: true

@@ -2,7 +2,7 @@
 # Description: Models for Exam CRUD operations
 
 import uuid, enum
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel
 from typing import List
 
 class ReferencesTypeEnum(str, enum.Enum):
@@ -25,14 +25,14 @@ class ReferenceUploadResponse(BaseModel):
 
 # Create Reference (URL)
 class ReferenceCreateRequest(BaseModel):
-    type: ReferencesTypeEnum
-    url: HttpUrl
+    # type: ReferencesTypeEnum
+    url: str
     
-    @field_validator("type")
-    def validate_type(cls, v):
-        if v not in [ReferencesTypeEnum.YT_VIDEO_URL, ReferencesTypeEnum.WEBSITE_URL]:
-            raise ValueError("Invalid reference type for URL")
-        return v
+    # @field_validator("type")
+    # def validate_type(cls, v):
+    #     if v not in [ReferencesTypeEnum.YT_VIDEO_URL, ReferencesTypeEnum.WEBSITE_URL]:
+    #         raise ValueError("Invalid reference type for URL")
+    #     return v
 
 class ReferenceCreateResponse(BaseModel):
     id: uuid.UUID
@@ -56,7 +56,7 @@ class ListReferenceResponse(BaseModel):
 #     pass
 
 class DownloadReferenceResponse(BaseModel):
-    url: HttpUrl
+    url: str
 
 # Delete Reference
 # class DeleteReferenceRequest(BaseModel):

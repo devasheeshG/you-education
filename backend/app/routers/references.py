@@ -83,6 +83,34 @@ LANGCHAIN_LOADERS_MAPPING = {
     ReferencesTypeEnum.YT_VIDEO_URL: YoutubeLoader,
 }
 
+# Add this function to detect URL type
+def detect_url_type(url: str) -> ReferencesTypeEnum:
+    """
+    Detect the type of URL based on its pattern.
+    
+    Args:
+        url: The URL to analyze
+        
+    Returns:
+        ReferencesTypeEnum: Either YT_VIDEO_URL or WEBSITE_URL
+    """
+    # YouTube URL patterns
+    youtube_patterns = [
+        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\s]+)',
+        r'(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^\?\s]+)',
+        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^\?\s]+)',
+        r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^\?\s]+)'
+    ]
+    
+    # Check if URL matches any YouTube pattern
+    for pattern in youtube_patterns:
+        match = re.search(pattern, url)
+        if match:
+            return ReferencesTypeEnum.YT_VIDEO_URL
+    
+    # If no match, assume it's a regular website
+    return ReferencesTypeEnum.WEBSITE_URL
+
 @router.post(
     "/upload",
     status_code=status.HTTP_201_CREATED,
@@ -263,12 +291,10 @@ def create_reference(
 ) -> ReferenceCreateResponse:
     """
     Create a reference using a URL for an exam.
-    Supported file types:
-    - yt_video_url: YouTube video URL
-    - website_url: Website URL
+    The system will automatically detect if it's a YouTube video URL or a website URL.
     
     Parameters:
-        - **request**: ReferenceCreateRequest object containing the URL and type
+        - **request**: ReferenceCreateRequest object containing the URL
         - **exam_id**: UUID of the exam this reference belongs to
     """
     try:
@@ -294,13 +320,21 @@ def create_reference(
                 detail=f"Reference with URL {request.url} already exists."
             )
         
+        # Automatically detect URL type
+        url_type = detect_url_type(request.url)
+        
         # Scrape the content from the URL
         try:
-            loader_class = LANGCHAIN_LOADERS_MAPPING[request.type]
-            if request.type == ReferencesTypeEnum.WEBSITE_URL:
-                loader: BaseLoader = loader_class(request.url)
-            elif request.type == ReferencesTypeEnum.YT_VIDEO_URL:
-                video_id = re.search(r"(?<=v=)[^&]+", str(request.url)).group(0)
+            loader_class = LANGCHAIN_LOADERS_MAPPING[url_type]
+            if url_type == ReferencesTypeEnum.WEBSITE_URL:
+                loader: BaseLoader = loader_class([request.url])
+            elif url_type == ReferencesTypeEnum.YT_VIDEO_URL:
+                if 'youtu.be' in request.url:
+                    video_id = request.url.split('/')[-1].split('?')[0]
+                elif 'youtube.com/shorts' in request.url:
+                    video_id = request.url.split('/')[-1].split('?')[0]
+                else:
+                    video_id = re.search(r"(?<=v=)[^&]+", str(request.url)).group(0)
                 loader: BaseLoader = loader_class(video_id)
             documents = loader.load()
         except Exception as e:
@@ -313,7 +347,7 @@ def create_reference(
         # Save reference in database
         reference = Reference(
             exam_id=exam_id,
-            file_type=request.type,
+            file_type=url_type,
             file_name=request.url,
         )
         
@@ -357,7 +391,7 @@ def create_reference(
         
         return ReferenceCreateResponse(
             id=reference.id,
-            type=request.type,
+            type=url_type,
             name=request.url
         )
     

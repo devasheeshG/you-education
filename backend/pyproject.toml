@@ -30,6 +30,7 @@ pypdf = "^5.4.0"
 youtube-transcript-api = "^1.0.3"
 unstructured = "^0.17.2"
 selenium = "^4.31.0"
+google-api-python-client = "^2.167.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
