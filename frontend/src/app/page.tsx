@@ -106,7 +106,11 @@ function LandingPage() {
       }, 3000);
       
       // Then refresh the exams list
-      const examsResponse = await fetch('/api/proxy/exams');
+      const examsResponse = await fetch(`${API_URL}/api/v1/exams`, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
       if (!examsResponse.ok) {
         throw new Error('Failed to refresh exams');
       }
