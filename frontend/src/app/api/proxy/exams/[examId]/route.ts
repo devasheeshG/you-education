@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL || 'https://you-education.devasheeshmishra.com';
+const API_URL = process.env.API_URL || 'https://you-education.devasheeshmishra.com/api';
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function GET(
   try {
     const examId = params.examId;
     
-    const response = await fetch(`${API_URL}/api/v1/exams/${examId}`, {
+    const response = await fetch(`${API_URL}/v1/exams/${examId}`, {
       headers: {
         'Accept': 'application/json',
       },
@@ -43,7 +43,7 @@ export async function PUT(
     const examId = params.examId;
     const body = await request.json();
     
-    const response = await fetch(`${API_URL}/api/v1/exams/${examId}`, {
+    const response = await fetch(`${API_URL}/v1/exams/${examId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export async function DELETE(
   try {
     const examId = params.examId;
     
-    const response = await fetch(`${API_URL}/api/v1/exams/${examId}`, {
+    const response = await fetch(`${API_URL}/v1/exams/${examId}`, {
       method: 'DELETE',
     });
 
