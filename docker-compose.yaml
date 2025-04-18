@@ -59,6 +59,9 @@ services:
     container_name: you-education-frontend
     environment:
       - NODE_ENV=production
+      - API_URL=http://you-education-backend:80/api
+    depends_on:
+      - you-education-backend
     labels:
       - traefik.enable=true
       - traefik.http.routers.you-education-frontend.rule=Host(`you-education.devasheeshmishra.com`)
