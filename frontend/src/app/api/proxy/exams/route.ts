@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL || 'https://you-education.devasheeshmishra.com';
+const API_URL = 'https://you-education.devasheeshmishra.com/api';
 
 export async function GET() {
   try {
-    const response = await fetch(`${API_URL}/api/v1/exams`, {
+    const response = await fetch(`${API_URL}/v1/exams`, {
       headers: {
         'Accept': 'application/json',
       },
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const response = await fetch(`${API_URL}/api/v1/exams`, {
+    const response = await fetch(`${API_URL}/v1/exams`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
