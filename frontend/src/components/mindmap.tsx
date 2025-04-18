@@ -195,10 +195,80 @@ export default function MindmapPage({ onLeafClick }: { onLeafClick: (selection: 
       },
       paddingX: 16,
       duration: 500,
-      style: undefined // Remove unsupported properties
+      // Use a simple empty style as we'll apply styles separately
+      style: (id) => { return ''; }
     }, root);
-    
+
+    // Store the reference
     markmapRef.current = mm;
+    
+    // Function to apply styles to all nodes - will run initially and after any updates
+    const applyStyles = () => {
+      if (!svgRef.current) return;
+      
+      // Apply text styles with !important to override any existing styles
+      const styleElement = document.createElement('style');
+      styleElement.textContent = `
+        .markmap-node-text {
+          fill: #ffffff !important;
+          font-size: 14px !important;
+          font-weight: 500 !important;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+        }
+        .markmap-link {
+          stroke: #6366f1 !important;
+          stroke-width: 1.5px !important;
+          stroke-opacity: 0.75 !important;
+        }
+      `;
+      document.head.appendChild(styleElement);
+      
+      // Use proper type casting for SVG elements
+      svgRef.current.querySelectorAll('.markmap-node-text').forEach(el => {
+        // Cast Element to SVGElement to access attributes correctly
+        const svgEl = el as SVGElement;
+        svgEl.setAttribute('fill', '#ffffff');
+        svgEl.setAttribute('font-size', '14px');
+        svgEl.setAttribute('font-weight', '500');
+        
+        // For HTML elements with style property, use type assertion
+        const htmlEl = el as unknown as HTMLElement;
+        if (htmlEl.style) {
+          htmlEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
+          // Force a repaint
+          htmlEl.style.display = 'none';
+          void htmlEl.offsetHeight; // trigger reflow
+          htmlEl.style.display = '';
+        }
+      });
+
+      svgRef.current.querySelectorAll('.markmap-link').forEach(el => {
+        // Cast to SVGElement for setAttribute
+        (el as SVGElement).setAttribute('stroke', '#6366f1');
+        (el as SVGElement).setAttribute('stroke-width', '1.5px');
+        (el as SVGElement).setAttribute('stroke-opacity', '0.75');
+      });
+    };
+
+    // Apply styles initially
+    applyStyles();
+
+    // Use a MutationObserver to detect changes and apply styles
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList' && svgRef.current && svgRef.current.contains(mutation.target as Node)) {
+          applyStyles();
+        }
+      });
+    });
+
+    // Start observing the SVG element for changes
+    if (svgRef.current) {
+      observer.observe(svgRef.current, {
+        childList: true,
+        subtree: true
+      });
+    }
     
     // Add click event listener to the SVG element
     const handleNodeClick = (event: MouseEvent) => {
@@ -241,6 +311,14 @@ export default function MindmapPage({ onLeafClick }: { onLeafClick: (selection: 
       if (markmapRef.current) {
         markmapRef.current.destroy();
       }
+      // Clean up the style element on unmount
+      document.querySelectorAll('style').forEach(style => {
+        if (style.textContent?.includes('.markmap-node-text')) {
+          style.remove();
+        }
+      });
+      // observer disconnect
+      observer.disconnect();
     };
   }, []);
 
@@ -266,10 +344,11 @@ export default function MindmapPage({ onLeafClick }: { onLeafClick: (selection: 
             className="w-full h-full" 
             style={{
               cursor: 'pointer',
-              textShadow: '0 0 5px rgba(165, 180, 252, 0.7)',
               fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
               fontWeight: 500,
-              fill: '#f4f4f5',
+              fill: '#ffffff', // White fill for all text
+              filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))', // Add drop shadow for better contrast
+              color: '#ffffff' // Ensure SVG text color is white
             }}
           />
         </div>

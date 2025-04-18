@@ -1,55 +1,47 @@
-Map resources to a provided mindmap following these precise requirements:
+you are an expert at adding resouces for the topics, to make student study easier
+Given data invloves the following:
+- Subject name ( string)
+- book ( string)
+- user provided youtube url
+- suggested youtube url 
 
-1. Input:
-   - A mindmap for {topic} based on syllabus and notes
-   - Two sets of YouTube video links with title, URL, and duration
-   - Total study time: {time}
+## Instructions
+- first get all the subtopics that have **is_last_subtopic** set to true.
+- for all these subtopics you will have to get one youtube link and one notes.
+- **secting youtube video for subtopics with is_last_subtopic as true**
+  - if from all the user provided youtube url one is on the similar topic as same of the subtopic title then it will be selcted as the yputube video for that subtopic
+  - else youble video selected would be from suggested youtube url
+- **Generating notes for subtopics with is_last_subtopic as true**
+  - generate notes for the subtopic on the subtopic title, using book text provided.
+- now add these two as resouces in those nodes with is_last_subtopic as true
 
-2. Resource Mapping Logic:
-   - For each leaf node in the mindmap:
-     - First, attempt to match with videos from set 1
-     - If no match in set 1, attempt to match with videos from set 2
-     - If no match in either set, assign generated notes as the resource
-
-3. Resource Type Requirements:
-   - YouTube videos link.
-   - Generated notes: Create concise, topic-specific content in markdown format
-   - Ensure all resources collectively fit within the specified {time} constraint
-
-4. Response Format:
-   - Return TWO separate JSON objects without any commentary or explanations:
-
-5. First JSON - Complete Mindmap with Resources:
+## output
+Output should strictly in this format, do not write any other thing in response 
 ```json
 {
-  "title": "MAIN_SUBJECT",
-  "is_end_node": false,
+  "title": "",
+  "is_last_subtopic": false,
   "subtopics": [
     {
-      "title": "TOPIC_1",
-      "is_end_node": false,
+      "title": "",
+      "is_last_subtopic": false,
       "subtopics": [
         {
-          "title": "SUBTOPIC_1.1",
-          "is_end_node": false,
-          "subtopics": [
+          "title": "",
+          "is_last_subtopic": true,
+          "resources": [
             {
-              "title": "DETAIL_1.1.1",
-              "is_end_node": true,
-              "type": "Notes",
-              "resource": {
-                "id": "unique-resource-id"
+              "id": "res-uuid",
+              "type": "youtube",
+              "data": {
+                "url": "https://youtu.be/testvideo"
               }
             },
             {
-              "title": "DETAIL_1.1.2",
-              "is_end_node": true,
-              "type": "youtube_video",
-              "resource": {
-                "id": "unique-resource-id",
-                "data": {
-                  "url": "https://youtu.be/video-id"
-                }
+              "id": "res-uuid",
+              "type": "notes",
+              "data": {
+                "md": "md file data"
               }
             }
           ]
@@ -58,18 +50,4 @@ Map resources to a provided mindmap following these precise requirements:
     }
   ]
 }
-```
-
-- second json format
-```json
-[
-  {
-    "id": "unique-resource-id",
-    "data": "# Title\n\n## Subtopic\n\nDetailed markdown content with explanations...\n\n"
-  },
-  {
-    "id": "unique-resource-id",
-    "data": "# Another Topic\n\n## Key Points\n\n- Point 1\n- Point 2\n\n"
-  }
-]
 ```
