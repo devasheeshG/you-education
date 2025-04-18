@@ -59,7 +59,7 @@ services:
     container_name: you-education-frontend
     environment:
       - NODE_ENV=development
-      - API_URL=http://you-education-backend:80/api
+      - API_URL=http://you-education-backend
     depends_on:
       - you-education-backend
     labels:
