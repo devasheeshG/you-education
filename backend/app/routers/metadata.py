@@ -2,10 +2,9 @@
 # Description: Router for extracting metadata from YouTube videos and websites
 
 import re
+import requests
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, status
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 from app.utils.models import (
     YouTubeMetadataRequest,
     YouTubeMetadataResponse,
@@ -125,35 +124,24 @@ def extract_website_metadata(request: WebsiteMetadataRequest) -> WebsiteMetadata
         - **title**: The title of the website
     """
     try:
-        # Setup headless Chrome browser
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+        # Make a request to the website
+        response = requests.get(request.url, timeout=10)
+        response.raise_for_status()  # Raise an exception for HTTP errors
         
-        # Initialize driver
-        driver = webdriver.Chrome(options=chrome_options)
+        # Parse the HTML using BeautifulSoup
+        soup = BeautifulSoup(response.text, 'html.parser')
         
-        try:
-            # Load the website
-            driver.get(request.url)
-            
-            # Get the title
-            title = driver.title
-            
-            if not title:
-                # Try to find title tag directly
-                try:
-                    title_element = driver.find_element(By.TAG_NAME, "title")
-                    title = title_element.text
-                except:
-                    title = "Untitled website"
-            
-            return WebsiteMetadataResponse(title=title)
-            
-        finally:
-            # Always close the driver
-            driver.quit()
+        # Get the title
+        title = soup.title.string if soup.title else "Untitled website"
+        
+        return WebsiteMetadataResponse(title=title)
+    
+    except requests.RequestException as e:
+        logger.error(f"Error requesting website: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to access the website."
+        )
     
     except Exception as e:
         logger.error(f"Error extracting website metadata: {str(e)}")

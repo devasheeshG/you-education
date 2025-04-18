@@ -1,7 +1,7 @@
 # Path: app/routers/mindmap.py
 # Description: This file contains the routers for the Mindmap API.
 
-import uuid
+import uuid, json
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from typing import List, Dict, Any
 from sqlalchemy.orm import Session
@@ -289,7 +289,7 @@ def get_mindmap(
             
             # Parse the initial mindmap
             initial_mindmap = response.choices[0].message.content
-            initial_mindmap = eval(initial_mindmap) if isinstance(initial_mindmap, str) else initial_mindmap
+            initial_mindmap = json.loads(initial_mindmap) if isinstance(initial_mindmap, str) else initial_mindmap
             
             # Extract leaf nodes and search YouTube for each
             leaf_nodes = extract_leaf_nodes(initial_mindmap)
@@ -309,7 +309,7 @@ def get_mindmap(
             
             # Parse the final mindmap
             final_mindmap = refine_response.choices[0].message.content
-            final_mindmap = eval(final_mindmap) if isinstance(final_mindmap, str) else final_mindmap
+            final_mindmap = json.loads(final_mindmap) if isinstance(final_mindmap, str) else final_mindmap
             
             # Save to MongoDB for future use
             mongodb_client.insert_mindmap(exam_id, final_mindmap)
