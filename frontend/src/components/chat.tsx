@@ -1,8 +1,9 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import { getExamReferences, Reference } from '../app/api/references';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: number;
@@ -29,10 +30,126 @@ const Chat: React.FC = () => {
   const [allReferences, setAllReferences] = useState<Reference[]>([]);
   const [addedReferences, setAddedReferences] = useState<Reference[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Function to send chat request and handle streaming response
+  const sendChatRequest = async (userMessage: string, previousMessages: Message[]) => {
+    // Create a temporary AI message with empty content that will be updated as chunks arrive
+    const aiMessage: Message = {
+      id: messages.length + 2,
+      text: '',
+      sender: 'ai',
+      timestamp: new Date(),
+    };
+    
+    // Add empty AI message to the chat
+    setMessages(prev => [...prev, aiMessage]);
+    setIsLoading(true);
+    
+    // Get reference IDs from added references
+    const referenceIds = addedReferences.map(ref => ref.id);
+    
+    // Format previous messages for the API
+    const formattedPrevMsgs = previousMessages.map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'assistant',
+      content: msg.text
+    }));
+    
+    try {
+      const response = await fetch(`/api/proxy/exams/${examId}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          reference_ids: referenceIds,
+          previous_messages: formattedPrevMsgs,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+      
+      // Handle streaming response
+      if (response.headers.get('content-type')?.includes('text/event-stream')) {
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('Failed to get stream reader');
+        
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          // Decode and process the chunk
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Process complete events (each event ends with \n\n)
+          const events = buffer.split('\n\n');
+          buffer = events.pop() || ''; // Keep incomplete event in buffer
+          
+          for (const event of events) {
+            if (event.startsWith('data: ')) {
+              const content = event.substring(6).trim(); // Remove 'data: ' prefix
+              
+              if (content === '[DONE]') {
+                break;
+              }
+              
+              // Update the AI message with new content chunk
+              setMessages(prev => {
+                const updated = [...prev];
+                const lastMsg = updated[updated.length - 1];
+                if (lastMsg.sender === 'ai') {
+                  try {
+                    // The content is JSON-escaped from backend, so we parse it to properly handle whitespace
+                    const decodedContent = JSON.parse(`"${content}"`);
+                    lastMsg.text += decodedContent;
+                  } catch (e) {
+                    // Fallback to original content if parsing fails
+                    console.warn("Failed to decode content chunk:", e);
+                    lastMsg.text += content;
+                  }
+                }
+                return updated;
+              });
+            }
+          }
+        }
+      } else {
+        // Handle non-streaming response
+        const data = await response.json();
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg.sender === 'ai') {
+            lastMsg.text = data.message || 'Sorry, I couldn\'t process your request properly.';
+          }
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Error in chat request:', error);
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg.sender === 'ai') {
+          lastMsg.text = 'Sorry, an error occurred while processing your request.';
+        }
+        return updated;
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isLoading) return;
 
     // Add user message
     const userMessage: Message = {
@@ -42,21 +159,18 @@ const Chat: React.FC = () => {
       timestamp: new Date(),
     };
 
-    setMessages([...messages, userMessage]);
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
+    
+    // Send message to API and handle response
+    const messageToSend = newMessage;
     setNewMessage('');
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: messages.length + 2,
-        text: 'I\'ve noted your question. Is there anything specific about this topic you\'d like to explore further?',
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    
+    // Send request to backend
+    sendChatRequest(messageToSend, messages);
   };
+
+  // The rest of your component remains the same
 
   // Load all exam references on mount or when examId changes
   useEffect(() => {
@@ -80,6 +194,12 @@ const Chat: React.FC = () => {
     setAddedReferences(prev => prev.filter(r => r.id !== id));
   };
 
+  // Auto-scroll to bottom when messages change
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
     <div className="flex flex-col h-full border border-zinc-700 rounded-xl overflow-hidden bg-zinc-800/50 backdrop-blur-sm shadow-lg">
       {/* Header */}
@@ -92,7 +212,11 @@ const Chat: React.FC = () => {
           </div>
           <span className="font-medium text-zinc-100">AI Chat Assistant</span>
         </div>
-        <span className="text-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full px-2 py-1">Online</span>
+        <span className={`text-xs rounded-full px-2 py-1 ${isLoading 
+          ? 'bg-amber-600 text-white' 
+          : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'}`}>
+          {isLoading ? 'Thinking...' : 'Online'}
+        </span>
       </div>
 
       {/* Chat and References Panels */}
@@ -116,7 +240,28 @@ const Chat: React.FC = () => {
                     : 'bg-zinc-800 border border-zinc-700 text-zinc-100'
                 }`}
               >
-                <p className="text-sm md:text-base">{message.text}</p>
+                <ReactMarkdown 
+                  components={{
+                    p: ({node, ...props}) => <p className="text-sm md:text-base markdown-content whitespace-pre-wrap my-2" {...props} />,
+                    pre: ({node, ...props}) => <pre className="bg-zinc-900 p-3 rounded-md overflow-auto my-3 text-zinc-200" {...props} />,
+                    code: ({node, inline, ...props}: {node?: any, inline?: boolean} & React.HTMLAttributes<HTMLElement>) => 
+                      inline 
+                        ? <code className="bg-zinc-900 px-1 rounded-sm text-pink-400 font-mono" {...props} />
+                        : <code className="font-mono" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+                    li: ({node, ...props}) => <li className="text-sm md:text-base" {...props} />,
+                    h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-md font-semibold my-2" {...props} />,
+                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-500 pl-3 italic my-2" {...props} />,
+                    table: ({node, ...props}) => <div className="overflow-x-auto my-3"><table className="min-w-full border-collapse" {...props} /></div>,
+                    th: ({node, ...props}) => <th className="border border-zinc-700 px-2 py-1 bg-zinc-900" {...props} />,
+                    td: ({node, ...props}) => <td className="border border-zinc-700 px-2 py-1" {...props} />,
+                  }}
+                >
+                  {message.text}
+                </ReactMarkdown>
                 <div className="text-xs mt-2 opacity-70 flex justify-end">
                   {message.timestamp.toLocaleTimeString([], {
                     hour: '2-digit',
@@ -126,6 +271,7 @@ const Chat: React.FC = () => {
               </div>
             </motion.div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* References panel */}
@@ -187,13 +333,18 @@ const Chat: React.FC = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Ask a question about this exam..."
             className="flex-1 p-3 rounded-md border border-zinc-700 bg-zinc-800/50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-zinc-100"
+            disabled={isLoading}
           />
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             type="submit"
-            className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
-            disabled={!newMessage.trim()}
+            className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 transition-all duration-300 ${
+              isLoading || !newMessage.trim() 
+                ? 'bg-gray-600 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+            }`}
+            disabled={isLoading || !newMessage.trim()}
           >
             <span>Send</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">

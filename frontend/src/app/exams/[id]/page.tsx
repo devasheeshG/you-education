@@ -8,6 +8,7 @@ import References from '@/components/resources';
 import Notes from '@/components/notes';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import VideoDescription from '@/components/video_description';
 
 // Since we don't have direct access to modify the Chat and References components,
 // we'll create wrapper components that handle the examId prop
@@ -106,6 +107,17 @@ const ExamPage = () => {
   const handleLeafClick = (node: any) => {
     setSelectedNode(node);
     setShowDetail(true);
+    
+    // Find and reset the mindmap if it's a YouTube video
+    if (node?.type === 'youtube') {
+      // Use a slight delay to ensure the DOM is updated
+      setTimeout(() => {
+        const resetButton = document.querySelector('.markmap-toolbar button[aria-label="Reset view"]') as HTMLButtonElement;
+        if (resetButton) {
+          resetButton.click();
+        }
+      }, 100);
+    }
   };
 
   if (loading) {
@@ -204,7 +216,7 @@ const ExamPage = () => {
               whileHover={{ borderColor: 'rgb(129, 140, 248)' }}
               transition={{ duration: 0.3 }}
             >
-              {selectedNode?.type === 'youtube_video' ? (
+              {selectedNode?.type === 'youtube' ? (
                 <YouTubePlayer url={selectedNode.resource.data.url} />
               ) : selectedNode?.type === 'Notes' ? (
                 <Notes
@@ -220,17 +232,10 @@ const ExamPage = () => {
             </motion.div>
 
             {/* Video description only for YouTube nodes */}
-            {selectedNode?.type === 'youtube_video' && (
-              <motion.div
-                className="border border-zinc-700 rounded-xl bg-zinc-800/50 shadow-lg backdrop-blur-sm p-2"
-                whileHover={{ borderColor: 'rgb(129, 140, 248)' }}
-                transition={{ duration: 0.3 }}
-              >
-                <VideoDescriptionStyled 
-                  isYouTubeVideo={true} 
-                  videoData={examData.videoData}
-                />
-              </motion.div>
+            {selectedNode?.type === 'youtube' && (
+              <div className="mt-2 w-full">
+                <VideoDescription url={selectedNode.resource.data.url} />
+              </div>
             )}
           </motion.div>
         )}
@@ -260,55 +265,6 @@ const ExamPage = () => {
     </div>
   );
 };
-
-// Styled components to match the theme
-function VideoDescriptionStyled({ isYouTubeVideo, videoData }: { isYouTubeVideo: boolean, videoData?: any }) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (!isYouTubeVideo || !videoData) {
-    return (
-      <div className="p-2">
-        <p className="text-zinc-400 text-sm">No description available</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-2">
-      <div className="mb-4">
-        <h3 className="text-lg font-medium mb-2 text-indigo-300">Video Description</h3>
-        <p className="text-sm text-zinc-300 mb-2">
-          {expanded ? videoData.description : `${videoData.description.substring(0, 150)}...`}
-        </p>
-        <button 
-          onClick={() => setExpanded(!expanded)} 
-          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-        >
-          {expanded ? 'Show less' : 'Show more'}
-        </button>
-      </div>
-      
-      <div>
-        <h3 className="text-lg font-medium mb-3 text-indigo-300">Chapters</h3>
-        <div className="space-y-2">
-          {videoData.chapters.map((chapter: any, index: number) => (
-            <motion.div 
-              key={index}
-              whileHover={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', scale: 1.01 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-3 p-2 rounded-lg cursor-pointer"
-            >
-              <div className="bg-indigo-900/20 text-indigo-400 rounded px-2 py-1 text-xs font-medium min-w-[45px] text-center">
-                {chapter.time}
-              </div>
-              <span className="text-sm">{chapter.title}</span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function TabsContainerStyled({ defaultActive, children }: { defaultActive: string, children: Record<string, React.ReactNode> }) {
   const [activeTab, setActiveTab] = useState(defaultActive);
