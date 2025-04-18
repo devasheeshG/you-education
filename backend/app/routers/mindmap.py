@@ -67,11 +67,51 @@ Format your response as a JSON object following this structure:
 Make sure titles are concise, clear, and would work well as YouTube search terms.
 """
 
+# MINDMAP_REFINER_PROMPT = """You are an expert educational content curator. You have been provided with:
+# 1. An initial mindmap structure
+# 2. YouTube video results for each leaf node in the mindmap
+
+# Your task is to refine the mindmap and integrate the most relevant YouTube resources for each leaf node.
+
+# For each leaf node (where "is_last_subtopic" is true), select up to 3 of the most relevant YouTube videos and integrate them into the final mindmap.
+
+# Return your response as a JSON object following this structure:
+# {
+#     "title": "Main Topic",
+#     "is_last_subtopic": false,
+#     "subtopics": [
+#         {
+#         "title": "Subtopic 1",
+#         "is_last_subtopic": false,
+#         "subtopics": [
+#             {
+#             "title": "Specific Concept 1",
+#             "is_last_subtopic": true,
+#             "resources": [
+#                 {
+#                     "type": "youtube",
+#                     "data": {
+#                         "url": "https://youtu.be/video-id",
+#                         "title": "Video Title",
+#                         "description": "Brief description of the video"
+#                     }
+#                 }
+#             ]
+#             }
+#         ]
+#         }
+#     ]
+# }
+
+# Ensure the integrated resources are highly relevant to the specific leaf node topics.
+# """
+
 MINDMAP_REFINER_PROMPT = """You are an expert educational content curator. You have been provided with:
 1. An initial mindmap structure
 2. YouTube video results for each leaf node in the mindmap
+3. Notes of the user
 
-Your task is to refine the mindmap and integrate the most relevant YouTube resources for each leaf node.
+Your task is to refine the mindmap and integrate the most relevant YouTube resources for each leaf node. Also add short notes for each leaf node.
 
 For each leaf node (where "is_last_subtopic" is true), select up to 3 of the most relevant YouTube videos and integrate them into the final mindmap.
 
@@ -95,6 +135,10 @@ Return your response as a JSON object following this structure:
                         "title": "Video Title",
                         "description": "Brief description of the video"
                     }
+                },
+                {
+                    "type": "notes",
+                    "data": "...multiline notes..."
                 }
             ]
             }
@@ -301,7 +345,8 @@ def get_mindmap(
                 model=settings.MINDMAP_LLM_MODEL_NAME,
                 messages=[
                     {"role": "system", "content": MINDMAP_REFINER_PROMPT},
-                    {"role": "user", "content": f"Initial mindmap:\n{initial_mindmap}\n\nVideo results:\n{video_results}"}
+                    # {"role": "user", "content": f"Initial mindmap:\n{initial_mindmap}\n\nVideo results:\n{video_results}"}
+                    {"role": "user", "content": f"Initial mindmap:\n{initial_mindmap}\n\nVideo results:\n{video_results}\n\nNotes:\n{content_for_llm}"}
                 ],
                 response_format={"type": "json_object"}
             )
