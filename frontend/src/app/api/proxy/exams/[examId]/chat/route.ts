@@ -5,7 +5,7 @@ const API_URL = process.env.API_URL || 'https://you-education.devasheeshmishra.c
 interface ChatRequest {
   message: string;
   reference_ids: string[];
-  previous_messages?: Array<any>;
+  previous_messages?: unknown[];
   exam_id?: string; // This might be redundant since exam_id is in the path
 }
 

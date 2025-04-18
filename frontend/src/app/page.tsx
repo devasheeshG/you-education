@@ -158,25 +158,7 @@ function LandingPage() {
     return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  // Calculate mock progress for upcoming exams
-  const calculateMockProgress = (exam: Exam) => {
-    const examDate = new Date(exam.exam_datetime);
-    const now = new Date();
-    const totalTime = exam.total_hours_to_dedicate;
-    
-    // Simple mock progress based on time remaining
-    const timeLeft = (examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24); // days left
-    const progress = Math.max(0, Math.min(100, 100 - (timeLeft * 5)));
-    
-    return Math.round(progress);
-  };
-
-  // Mock score for past exams (in a real app, this would come from the API)
-  const getMockScore = (examId: string) => {
-    // Generate a deterministic but random-looking score based on the exam ID
-    const numericHash = examId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return `${70 + (numericHash % 30)}%`;
-  };
+  
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -396,7 +378,7 @@ function LandingPage() {
                   Upcoming Exams
                 </h2>
                 <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-8 text-center">
-                  <p className="text-zinc-400">No upcoming exams. Click "Create Exam" to add one.</p>
+                  <p className="text-zinc-400">No upcoming exams. Click &quot;Create Exam&quot; to add one.</p>
                 </div>
               </motion.section>
             )}

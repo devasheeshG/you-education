@@ -5,10 +5,9 @@ import YouTubePlayer from '@/components/youtube_player';
 import MindmapPage from '@/components/mindmap';
 import Chat from '@/components/chat';
 import References from '@/components/resources';
-import TabsContainer from '@/components/tabs_container';
-import VideoDescription from '@/components/video_description';
 import Notes from '@/components/notes';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 interface ExamData {
   id: string;
@@ -98,10 +97,12 @@ const ExamPage = () => {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-2xl font-medium mb-4">Exam not found</h1>
-          <p className="text-zinc-400 mb-6">The exam you're looking for doesn't exist or has been removed.</p>
-          <a href="/exams" className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:bg-indigo-700 transition-all duration-300 hover:scale-105">
-            Return to Exams
-          </a>
+          <p className="text-zinc-400 mb-6">The exam you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+          <Link href="/exams" passHref>
+              <a className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-900/30 hover:bg-indigo-700 transition-all duration-300 hover:scale-105">
+              Return to Exams
+              </a>
+        </Link>
         </motion.div>
       </div>
     );

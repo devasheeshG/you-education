@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL || 'https://you-education.devasheeshmishra.com';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const response = await fetch(`${API_URL}/api/v1/exams`, {
       headers: {
