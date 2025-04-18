@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_URL = process.env.API_URL || 'https://you-education.devasheeshmishra.com';
+const API_URL = 'https://you-education.devasheeshmishra.com';
 
 export async function PUT(
   request: NextRequest,
