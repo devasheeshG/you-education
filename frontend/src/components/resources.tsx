@@ -230,7 +230,7 @@ export default function Resources() {
       if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
         return urlObj.searchParams.get('v') || '';
       }
-    } catch (e) {
+    } catch (_error) {
       // Invalid URL
     }
     return 'default';
@@ -243,7 +243,7 @@ export default function Resources() {
     try {
       const urlObj = new URL(url);
       return urlObj.hostname.replace('www.', '');
-    } catch (e) {
+    } catch (_error) {
       return 'unknown';
     }
   };
