@@ -104,12 +104,14 @@ def create_exam(
         )
 
         return ExamCreateResponse(
-            id=exam.id,
-            name=exam.name,
-            description=exam.description,
-            exam_datetime=exam.exam_datetime,
-            total_hours_to_dedicate=exam.total_hours_to_dedicate,
-            subject=subject_item
+            exam=ExamItem(
+                id=exam.id,
+                name=exam.name,
+                description=exam.description,
+                exam_datetime=exam.exam_datetime,
+                total_hours_to_dedicate=exam.total_hours_to_dedicate,
+                subject=subject_item
+            )
         )
 
     except HTTPException:
@@ -162,7 +164,6 @@ def get_exam(
             color=exam.subject.color
         )
 
-        # Fix: Correctly construct the response with an 'exam' field
         return GetExamResponse(
             exam=ExamItem(
                 id=exam.id,
