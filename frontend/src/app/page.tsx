@@ -82,7 +82,7 @@ function LandingPage() {
     try {
       setLoading(true);
       
-      const response = await fetch('/api/proxy/exams', {
+      const response = await fetch(`${API_URL}/api/v1/exams`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ function LandingPage() {
       }
       
       setLoading(true);
-      const response = await fetch(`/api/proxy/exams/${examId}`, {
+      const response = await fetch(`${API_URL}/api/v1/exams/${examId}`, {
         method: 'DELETE',
       });
       
