@@ -384,7 +384,7 @@ export default function Resources() {
         )}
         
         {/* Resource List - Now using full width */}
-        <div className="w-full overflow-y-auto">
+        <div className="w-full overflow-y-auto custom-scroll">
           {isLoading ? (
             <div className="flex flex-col justify-center items-center h-40">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mb-3"></div>
