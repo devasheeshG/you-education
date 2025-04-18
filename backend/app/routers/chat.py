@@ -215,7 +215,7 @@ def stream_chat_response(messages: List[dict]) -> Iterator[str]:
     """
     try:
         # Create streaming response from OpenAI
-        response_stream = oai_client.chat.completions.create(
+        response_stream = oai_llm_client.chat.completions.create(
             model=settings.CHAT_LLM_MODEL_NAME,
             messages=messages,
             stream=True
@@ -224,8 +224,11 @@ def stream_chat_response(messages: List[dict]) -> Iterator[str]:
         for chunk in response_stream:
             if chunk.choices and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
-                # Format as SSE
-                yield f"data: {content}\n\n"
+                # Format as SSE - ensure content is properly JSON-escaped
+                # to preserve all whitespace characters
+                import json
+                escaped_content = json.dumps(content)[1:-1]  # Remove quotes added by dumps
+                yield f"data: {escaped_content}\n\n"
                 # Small delay to control streaming rate
                 time.sleep(0.01)
         

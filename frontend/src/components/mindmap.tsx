@@ -123,53 +123,101 @@ export default function MindmapPage({ onLeafClick }: {
 
     markmapRef.current = mm;
 
-    const applyStyles = () => {
-      if (!svgRef.current) return;
+    // Apply styles and set up event listeners after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      applyStyles(svgRef);
       
-      const styleElement = document.createElement('style');
-      styleElement.textContent = `
-        .markmap-node-text {
-          fill: #ffffff !important;
-          font-size: 14px !important;
-          font-weight: 500 !important;
-          text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
-        }
-        .markmap-link {
-          stroke: #6366f1 !important;
-          stroke-width: 1.5px !important;
-          stroke-opacity: 0.75 !important;
-        }
-      `;
-      document.head.appendChild(styleElement);
-      
-      svgRef.current.querySelectorAll('.markmap-node-text').forEach(el => {
-        const svgEl = el as SVGElement;
-        svgEl.setAttribute('fill', '#ffffff');
-        svgEl.setAttribute('font-size', '14px');
-        svgEl.setAttribute('font-weight', '500');
+      // Define the click handler first
+      const handleNodeClick = (event: MouseEvent) => {
+        console.log('SVG clicked:', event.target);
         
-        const htmlEl = el as unknown as HTMLElement;
-        if (htmlEl.style) {
-          htmlEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
-          htmlEl.style.display = 'none';
-          void htmlEl.offsetHeight;
-          htmlEl.style.display = '';
+        const nodeG = (event.target as Element).closest('g.markmap-node') as SVGGElement;
+        if (!nodeG) {
+          console.log('No node element found');
+          return;
         }
-      });
-
-      svgRef.current.querySelectorAll('.markmap-link').forEach(el => {
-        (el as SVGElement).setAttribute('stroke', '#6366f1');
-        (el as SVGElement).setAttribute('stroke-width', '1.5px');
-        (el as SVGElement).setAttribute('stroke-opacity', '0.75');
-      });
-    };
-
-    applyStyles();
+        
+        console.log('Node element found:', nodeG);
+        const nodeData = (nodeG as any).__data__ as INode;
+        console.log('Node data:', nodeData);
+        
+        const isLeaf = !nodeData.children || nodeData.children.length === 0;
+        console.log('Is leaf node:', isLeaf);
+        
+        if (isLeaf) {
+          const titleKey = nodeData.content.trim().toLowerCase();
+          const nodeRecord = resourceMap.get(titleKey);
+          
+          console.log('Leaf node clicked:', {
+            content: nodeData.content,
+            titleKey: titleKey,
+            nodeRecordFound: !!nodeRecord
+          });
+          
+          if (nodeRecord && nodeRecord.resources) {
+            console.log('Resources found:', {
+              title: nodeRecord.title,
+              resourceCount: nodeRecord.resources.length,
+              resources: nodeRecord.resources
+            });
+            
+            event.stopPropagation();
+            
+            if (svgRef.current) {
+              svgRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+            handleReset();
+            onLeafClick({
+              type: nodeRecord.resources[0].type,
+              title: nodeRecord.title,
+              resource: nodeRecord.resources[0]
+            });
+            handleReset();
+          } else {
+            console.warn('No resource found for leaf:', {
+              content: nodeData.content, 
+              availableKeys: Array.from(resourceMap.keys())
+            });
+          }
+        } else {
+          console.log('Non-leaf node clicked:', nodeData.content);
+        }
+      };
+      
+      // Add the event listener with our handler
+      if (svgRef.current) {
+        svgRef.current.addEventListener('click', handleNodeClick);
+      }
+      
+      const handleResize = () => {
+        if (markmapRef.current) {
+          markmapRef.current.fit();
+        }
+      };
+      
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        if (svgRef.current) {
+          svgRef.current.removeEventListener('click', handleNodeClick);
+        }
+        if (markmapRef.current) {
+          markmapRef.current.destroy();
+        }
+        document.querySelectorAll('style').forEach(style => {
+          if (style.textContent?.includes('.markmap-node-text')) {
+            style.remove();
+          }
+        });
+        observer.disconnect();
+      };
+    }, 500);
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         if (mutation.type === 'childList' && svgRef.current && svgRef.current.contains(mutation.target as Node)) {
-          applyStyles();
+          applyStyles(svgRef);
         }
       });
     });
@@ -180,36 +228,6 @@ export default function MindmapPage({ onLeafClick }: {
         subtree: true
       });
     }
-    
-    const handleNodeClick = (event: MouseEvent) => {
-      const nodeG = (event.target as Element).closest('g.markmap-node') as SVGGElement;
-      if (!nodeG) return;
-      const nodeData = (nodeG as any).__data__ as INode;
-      const isLeaf = !nodeData.children || nodeData.children.length === 0;
-      if (isLeaf) {
-        const titleKey = nodeData.content.trim().toLowerCase();
-        const nodeRecord = resourceMap.get(titleKey);
-        if (nodeRecord && nodeRecord.resources) {
-          event.stopPropagation();
-          // Reset the zoom level
-          
-          if (svgRef.current) {
-            svgRef.current.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-          }
-          handleReset();
-          onLeafClick({
-            type: nodeRecord.resources[0].type,
-            title: nodeRecord.title,
-            resource: nodeRecord.resources[0]
-          });
-          handleReset();
-        } else {
-          console.warn('No resource found for leaf:', nodeData.content);
-        }
-      }
-    };
-    
-    svgRef.current.addEventListener('click', handleNodeClick);
     
     const handleResize = () => {
       if (markmapRef.current) {
@@ -232,9 +250,9 @@ export default function MindmapPage({ onLeafClick }: {
         }
       });
       observer.disconnect();
+      observer.disconnect();
     };
-  }, [apiData]);
-
+  }, [apiData, handleReset, onLeafClick]);
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full w-full">
@@ -338,4 +356,49 @@ export default function MindmapPage({ onLeafClick }: {
       </div>
     </div>
   );
+}
+
+function applyStyles(svgRef: React.RefObject<SVGSVGElement | null>) {
+  if (!svgRef.current) return;
+  
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    .markmap-node-text {
+      fill: #ffffff !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+    }
+    .markmap-link {
+      stroke: #6366f1 !important;
+      stroke-width: 1.5px !important;
+      stroke-opacity: 0.75 !important;
+    }
+  `;
+  document.head.appendChild(styleElement);
+  
+  svgRef.current.querySelectorAll('.markmap-node-text').forEach(el => {
+    const svgEl = el as SVGElement;
+    svgEl.setAttribute('fill', '#ffffff');
+    svgEl.setAttribute('font-size', '14px');
+    svgEl.setAttribute('font-weight', '500');
+    
+    const htmlEl = el as unknown as HTMLElement;
+    if (htmlEl.style) {
+      htmlEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.8)';
+      htmlEl.style.display = 'none';
+      void htmlEl.offsetHeight;
+      htmlEl.style.display = '';
+    }
+  });
+
+  svgRef.current.querySelectorAll('.markmap-link').forEach(el => {
+    (el as SVGElement).setAttribute('stroke', '#6366f1');
+    (el as SVGElement).setAttribute('stroke-width', '1.5px');
+    (el as SVGElement).setAttribute('stroke-opacity', '0.75');
+  });
+}
+
+function handleNodeClick(this: SVGSVGElement, ev: MouseEvent) {
+  throw new Error('Function not implemented.');
 }

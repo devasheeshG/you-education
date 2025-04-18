@@ -105,14 +105,15 @@ const Chat: React.FC = () => {
                 const updated = [...prev];
                 const lastMsg = updated[updated.length - 1];
                 if (lastMsg.sender === 'ai') {
-                  // Check if we need to add a space between the existing text and new content
-                  const needsSpace = lastMsg.text.length > 0 && 
-                    !lastMsg.text.endsWith(' ') && 
-                    !content.startsWith(' ') &&
-                    !lastMsg.text.endsWith('\n') &&
-                    !/[.,!?:;-]$/.test(lastMsg.text);
-                    
-                  lastMsg.text += (needsSpace ? ' ' : '') + content;
+                  try {
+                    // The content is JSON-escaped from backend, so we parse it to properly handle whitespace
+                    const decodedContent = JSON.parse(`"${content}"`);
+                    lastMsg.text += decodedContent;
+                  } catch (e) {
+                    // Fallback to original content if parsing fails
+                    console.warn("Failed to decode content chunk:", e);
+                    lastMsg.text += content;
+                  }
                 }
                 return updated;
               });
@@ -241,7 +242,22 @@ const Chat: React.FC = () => {
               >
                 <ReactMarkdown 
                   components={{
-                    p: ({node, ...props}) => <p className="text-sm md:text-base markdown-content" {...props} />
+                    p: ({node, ...props}) => <p className="text-sm md:text-base markdown-content whitespace-pre-wrap my-2" {...props} />,
+                    pre: ({node, ...props}) => <pre className="bg-zinc-900 p-3 rounded-md overflow-auto my-3 text-zinc-200" {...props} />,
+                    code: ({node, inline, ...props}: {node?: any, inline?: boolean} & React.HTMLAttributes<HTMLElement>) => 
+                      inline 
+                        ? <code className="bg-zinc-900 px-1 rounded-sm text-pink-400 font-mono" {...props} />
+                        : <code className="font-mono" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+                    li: ({node, ...props}) => <li className="text-sm md:text-base" {...props} />,
+                    h1: ({node, ...props}) => <h1 className="text-xl font-bold my-3" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-lg font-bold my-2" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-md font-semibold my-2" {...props} />,
+                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-500 pl-3 italic my-2" {...props} />,
+                    table: ({node, ...props}) => <div className="overflow-x-auto my-3"><table className="min-w-full border-collapse" {...props} /></div>,
+                    th: ({node, ...props}) => <th className="border border-zinc-700 px-2 py-1 bg-zinc-900" {...props} />,
+                    td: ({node, ...props}) => <td className="border border-zinc-700 px-2 py-1" {...props} />,
                   }}
                 >
                   {message.text}
