@@ -39,6 +39,13 @@ from .chat import (
     ChatRequest,
 )
 
+from .metadata import (
+    YouTubeMetadataRequest,
+    YouTubeMetadataResponse,
+    WebsiteMetadataRequest,
+    WebsiteMetadataResponse,
+)
+
 __all__ = [
     # Subjects
     "SubjectItem",
@@ -73,4 +80,10 @@ __all__ = [
     # Chat
     "ChatMessage",
     "ChatRequest",
+    
+    # Metadata
+    "YouTubeMetadataRequest",
+    "YouTubeMetadataResponse",
+    "WebsiteMetadataRequest",
+    "WebsiteMetadataResponse",
 ]

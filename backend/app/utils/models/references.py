@@ -2,7 +2,7 @@
 # Description: Models for Exam CRUD operations
 
 import uuid, enum
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from typing import List
 
 class ReferencesTypeEnum(str, enum.Enum):
