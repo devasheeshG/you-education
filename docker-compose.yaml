@@ -56,10 +56,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: you-education-frontend:latest
     container_name: you-education-frontend
     environment:
       - NODE_ENV=development
-      - API_URL=http://you-education-backend
+#      - API_URL=http://you-education-backend/api
+      - API_URL=https://you-education.devasheeshmishra.com/api
     depends_on:
       - you-education-backend
     labels:
