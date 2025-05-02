@@ -59,7 +59,8 @@ services:
     container_name: you-education-frontend
     environment:
       - NODE_ENV=development
-      - API_URL=http://you-education-backend
+#      - API_URL=http://you-education-backend
+      - API_URL=https://you-education.devasheeshmishra.com/api
     depends_on:
       - you-education-backend
     labels:
