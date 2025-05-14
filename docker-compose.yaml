@@ -30,6 +30,7 @@ services:
     image: you-education-backend:latest
     container_name: you-education-backend
     command: uvicorn app.main:app --log-level debug --host 0.0.0.0 --port 80
+    restart: unless-stopped
     volumes:
       - ./backend:/app
     depends_on:
@@ -58,6 +59,7 @@ services:
       dockerfile: Dockerfile
     image: you-education-frontend:latest
     container_name: you-education-frontend
+    restart: unless-stopped
     environment:
       - NODE_ENV=development
 #      - API_URL=http://you-education-backend/api
